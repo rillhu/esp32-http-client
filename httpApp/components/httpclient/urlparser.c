@@ -10,13 +10,15 @@
 /*
 	Free memory of parsed url
 */
-void parsed_url_free_2(struct parsed_url_2 *purl)
+void parsed_url_free_2(parsed_url_t_2 *purl)
 {
     if ( NULL != purl ) 
 	{
         if ( NULL != purl->scheme ) free(purl->scheme);
         if ( NULL != purl->host ) free(purl->host);
-        if ( NULL != purl->port ) free(purl->port);
+        //if ( NULL != purl->port ) free(purl->port); //"80" is a const string which is not malloced at all.
+                                                      //"target pointer is outside heap areas" failed will pop out;       
+        if ( NULL != purl->port && strcmp(purl->port,"80")) free(purl->port);
         if ( NULL != purl->path )  free(purl->path);
         if ( NULL != purl->query ) free(purl->query);
         if ( NULL != purl->fragment ) free(purl->fragment);
@@ -56,11 +58,11 @@ int is_scheme_char_2(int c)
 	RFC 1738 - http://www.ietf.org/rfc/rfc1738.txt
 	RFC 3986 -  http://www.ietf.org/rfc/rfc3986.txt
 */
-struct parsed_url_2 *parse_url(const char *url)
+parsed_url_t_2  *parse_url(const char *url)
 {
 	
 	/* Define variable */
-    struct parsed_url_2 *purl;
+    parsed_url_t_2  *purl;
     const char *tmpstr;
     const char *curstr;
     int len;
@@ -69,7 +71,7 @@ struct parsed_url_2 *parse_url(const char *url)
     int bracket_flag;
 
     /* Allocate the parsed url storage */
-    purl = (struct parsed_url_2*)malloc(sizeof(struct parsed_url_2));
+    purl = (parsed_url_t_2 *)malloc(sizeof(parsed_url_t_2 ));
     if ( NULL == purl ) 
 	{
         return NULL;

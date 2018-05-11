@@ -45,8 +45,8 @@ typedef struct parsed_url_2
 }parsed_url_t_2;
 
 
-struct parsed_url_2 *parse_url(const char *url);
-void parsed_url_free_2(struct parsed_url_2 *purl);
+parsed_url_t_2 *parse_url(const char *url);
+void parsed_url_free_2(parsed_url_t_2 *purl);
 
 
 

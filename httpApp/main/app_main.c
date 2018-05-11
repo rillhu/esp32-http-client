@@ -122,7 +122,7 @@ void app_main()
     printf("s_text: %s\n", hresp->status_text);    
     printf("body: \n%s\n", hresp->body);
 
-    //http_response_free(hresp);
+    http_response_free(hresp);
 
     printf("done\n");
 

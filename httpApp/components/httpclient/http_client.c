@@ -13,7 +13,6 @@
 
 #include "http_client.h"
 #include "stringx.h"
-#include "urlparser.h"
 
 #include "lwip/err.h"
 #include "lwip/sockets.h"
@@ -22,7 +21,7 @@
 #include "lwip/dns.h"
 
 
-const unsigned int BUF_SIZE = 256; //max single read buf size
+const unsigned int BUF_SIZE = 1024; //max single read buf size
 const unsigned int RECV_BUF_MAX_SIZE = 10240; //max total read buf size
 
 
@@ -33,7 +32,9 @@ http_response_t *handle_redirect_get(struct http_response* hresp, char* custom_h
 {
 	if(hresp->status_code_int > 300 && hresp->status_code_int < 399)
 	{
-        printf("redirect get\n");
+        http_response_free(hresp);  //free the 1st http response pointer if http is redirected.
+        
+        DPRINT("redirect get\n");
 		char *token = strtok(hresp->response_headers, "\r\n");
 		while(token != NULL)
 		{
@@ -91,7 +92,7 @@ http_response_t *handle_redirect_post(struct http_response* hresp, char* custom_
 	if(hresp->status_code_int > 300 && hresp->status_code_int < 399)
 	{
         
-        printf("%s, %d\n",__func__,__LINE__);
+        DPRINT("debug");
 		char *token = strtok(hresp->response_headers, "\r\n");
 		while(token != NULL)
 		{
@@ -107,7 +108,7 @@ http_response_t *handle_redirect_post(struct http_response* hresp, char* custom_
 	else
 	{
         
-        printf("%s, %d\n",__func__,__LINE__);
+        DPRINT("debug");
 		/* We're not dealing with a redirect, just return the same structure */
 		return hresp;
 	}
@@ -118,7 +119,7 @@ http_response_t *handle_redirect_post(struct http_response* hresp, char* custom_
 /*
 	Makes a HTTP request and returns the response
 */
-http_response_t *http_req(char *http_headers, struct parsed_url_2 *purl)
+http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
 {
 	/* Parse url */
 	if(purl == NULL)
@@ -130,6 +131,7 @@ http_response_t *http_req(char *http_headers, struct parsed_url_2 *purl)
 
 	/* Allocate memeory for htmlcontent */
 	struct http_response *hresp = (http_response_t *)malloc(sizeof(struct http_response));
+    
 	if(hresp == NULL)
 	{
 		printf("Unable to allocate memory for htmlcontent.\n");
@@ -209,7 +211,7 @@ http_response_t *http_req(char *http_headers, struct parsed_url_2 *purl)
 		sprintf(response, "%s%s", response, BUF);
         
         if(strlen(response)>RECV_BUF_MAX_SIZE){
-            printf("recv buf full\n");
+            printf("recv buf is full\n");
             break;
         }
 	}
@@ -232,25 +234,25 @@ http_response_t *http_req(char *http_headers, struct parsed_url_2 *purl)
     printf("close fd\n");
 
     
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
     /* Parse status code and text */
 	char *status_line = get_until(response, "\r\n");
     
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 	status_line = str_replace("HTTP/1.1 ", "", status_line);
     
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
     
 	char *status_code = str_ndup(status_line, 4);
     
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 	//status_code = str_replace(" ", "", status_code); //HTTP/1.1 response does not contain ',' anymore.   
 	char *status_text = str_replace(status_code, "", status_line);
     
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
     status_text = str_replace(" ", "", status_text);
     
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 
     hresp->status_code = status_code;
 	hresp->status_code_int = atoi(status_code);
@@ -260,25 +262,25 @@ http_response_t *http_req(char *http_headers, struct parsed_url_2 *purl)
 	char *headers = get_until(response, "\r\n\r\n");
 	hresp->response_headers = headers;
     
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 
 	/* Assign request headers */
 	hresp->request_headers = http_headers;
 
 	/* Assign request url */
 	hresp->request_uri = purl;
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 
 	/* Parse body */
 	char *body = strstr(response, "\r\n\r\n");
     
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 	body = str_replace("\r\n\r\n", "", body);
     
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 	hresp->body = body;
     
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 
 	/* Return response */
 	return hresp;
@@ -290,7 +292,7 @@ http_response_t *http_req(char *http_headers, struct parsed_url_2 *purl)
 http_response_t *http_get(char *url, char *custom_headers)
 {
 	/* Parse url */
-	struct parsed_url_2 *purl = parse_url(url);
+	parsed_url_t_2  *purl = parse_url(url);
 	if(purl == NULL)
 	{
 		printf("Unable to parse url");
@@ -343,6 +345,9 @@ http_response_t *http_get(char *url, char *custom_headers)
 		/* Add to header */
 		http_headers = (char*)realloc(http_headers, strlen(http_headers) + strlen(auth_header) + 2);
 		sprintf(http_headers, "%s%s", http_headers, auth_header);
+
+        free(upwd);
+        free(auth_header);
 	}
 
 	/* Add custom headers, and close */
@@ -358,7 +363,7 @@ http_response_t *http_get(char *url, char *custom_headers)
 
 	/* Make request and return response */
 	http_response_t *hresp = http_req(http_headers, purl);
-
+        
 	/* Handle redirect */
 	return handle_redirect_get(hresp, custom_headers);
 }
@@ -369,21 +374,21 @@ http_response_t *http_get(char *url, char *custom_headers)
 http_response_t *http_post(char *url, char *custom_headers, char *post_data)
 {
     
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 	/* Parse url */
-	struct parsed_url_2 *purl = parse_url(url);
+	parsed_url_t_2  *purl = parse_url(url);
 	if(purl == NULL)
 	{
 		printf("Unable to parse url");
 		return NULL;
 	}
     
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 
 	/* Declare variable */
 	char *http_headers = (char*)malloc(1024);
     
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 
     printf("url: %s\n", purl->host);
     if(purl->path != NULL)
@@ -416,7 +421,7 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
 		}
 	}
 
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 	/* Handle authorisation if needed */
 	if(purl->username != NULL)
 	{
@@ -437,7 +442,7 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
 		http_headers = (char*)realloc(http_headers, strlen(http_headers) + strlen(auth_header) + 2);
 		sprintf(http_headers, "%s%s", http_headers, auth_header);
 	}
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 
 	if(custom_headers != NULL)
 	{
@@ -450,11 +455,11 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
 	}
 	http_headers = (char*)realloc(http_headers, strlen(http_headers) + 1);
 
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 
 	/* Make request and return response */
 	http_response_t *hresp = http_req(http_headers, purl);
-    printf("%s, %d\n",__func__,__LINE__);
+    DPRINT("debug");
 
 	/* Handle redirect */
 	return handle_redirect_post(hresp, custom_headers, post_data);
@@ -467,7 +472,7 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
 http_response_t *http_head(char *url, char *custom_headers)
 {
 	/* Parse url */
-	struct parsed_url_2 *purl = parse_url(url);
+	parsed_url_t_2  *purl = parse_url(url);
 	if(purl == NULL)
 	{
 		printf("Unable to parse url");
@@ -545,7 +550,7 @@ http_response_t *http_head(char *url, char *custom_headers)
 http_response_t *http_options(char *url)
 {
 	/* Parse url */
-	struct parsed_url_2 *purl = parse_url(url);
+	parsed_url_t_2  *purl = parse_url(url);
 	if(purl == NULL)
 	{
 		printf("Unable to parse url");

@@ -63,7 +63,11 @@ void http_task(void *pvParameters)
 
     (void)pvParameters;
     while(1){
-#if 0
+
+#if 1
+        printf("http get, heap_size: %d\n",esp_get_free_heap_size());
+
+        //Note shou comment the free(hresp->request_headers); if use this test case.
         parsed_url_t_2 *purl = parse_url("http://www.baidu.com");
         printf("uri: %s\n",purl->uri);    
         printf("scheme: %s\n",purl->scheme);    
@@ -71,17 +75,21 @@ void http_task(void *pvParameters)
         printf("ip: %s\n",purl->ip);    
         printf("port: %s\n",purl->port);
         http_response_t *hresp = http_req("GET / HTTP/1.1\r\nHost:www.baidu.com\r\nConnection:close\r\n\r\n",purl);
-        printf("s_code: %s\n", hresp->status_code);
-        printf("s_code_int: %d\n", hresp->status_code_int);
-        printf("s_text: %s\n", hresp->status_text);    
-        printf("body222: \n%s\n", hresp->body);
+        //printf("s_code: %s\n", hresp->status_code);
+        //printf("s_code_int: %d\n", hresp->status_code_int);
+        //printf("s_text: %s\n", hresp->status_text);    
+        //printf("body222: \n%s\n", hresp->body);
         
         http_response_free(hresp);
+        
+        printf("http free, heap_size: %d\n",esp_get_free_heap_size());
 #endif
 
-#if 1
-        char * url = "http://www.baidu.com";
+#if 0
+        char * url = "http://www.baidu.com";    //prefer to use such format to transfer the url, not directly write in function call.
         http_response_t *hresp = http_get(url, NULL);
+        
+        printf("http get, heap_size: %d\n",esp_get_free_heap_size());
         if(hresp != NULL){
             printf("s_code: %s\n", hresp->status_code);
             printf("s_code_int: %d\n", hresp->status_code_int);
@@ -92,9 +100,10 @@ void http_task(void *pvParameters)
         }
         
         printf("done2\n");
+        
+        printf("http free, heap_size: %d\n",esp_get_free_heap_size());
 #endif
 
-        //printf("done1, heap_size: %d\n",system_get_free_heap_size());
 
 #if 0
         http_response_t *hresp = http_post("http://www.baidu.com", NULL,"");
@@ -105,7 +114,7 @@ void http_task(void *pvParameters)
 
         http_response_free(hresp);
         
-        //printf("done2, heap_size: %d\n",system_get_free_heap_size());
+        //printf("done2, heap_size: %d\n",esp_get_free_heap_size());
 #endif
 
 #if 0
@@ -120,6 +129,23 @@ void http_task(void *pvParameters)
         printf("done\n");
 #endif
 
+
+#if 0
+        char *str1 = (char *)malloc(1024);
+        memset(str1,'A',1024);
+        char *str2 = (char *)malloc(1024);
+        memcpy(str2,str1, 1024);
+
+        str1 = (char *)realloc(str1,2048);
+        
+        memcpy(str1,str2, 1024);
+        memcpy(str1+1024,str2, 1024);
+        
+        printf("111, heap_size: %d\n",esp_get_free_heap_size());        
+        free(str1);
+        free(str2);
+        printf("222, heap_size: %d\n",esp_get_free_heap_size());
+#endif        
         vTaskDelay(2000 / portTICK_RATE_MS);
         printf("start again\n");
     }
@@ -144,6 +170,7 @@ void app_main()
 
     vTaskDelay(2000 / portTICK_RATE_MS);  
     
+    printf("Entering task, heap_size: %d\n",esp_get_free_heap_size());
     xTaskCreate(&http_task, "http_task", 1024*80, NULL, 5, NULL);
     
 }

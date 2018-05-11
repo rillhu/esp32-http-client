@@ -17,7 +17,7 @@ void parsed_url_free_2(parsed_url_t_2 *purl)
         if ( NULL != purl->scheme ) free(purl->scheme);
         if ( NULL != purl->host ) free(purl->host);
         //if ( NULL != purl->port ) free(purl->port); //"80" is a const string which is not malloced at all.
-                                                      //"target pointer is outside heap areas" failed will pop out;       
+                                                      //This can avoid "target pointer is outside heap areas" failed issue       
         if ( NULL != purl->port && strcmp(purl->port,"80")) free(purl->port);
         if ( NULL != purl->path )  free(purl->path);
         if ( NULL != purl->query ) free(purl->query);

@@ -34,15 +34,14 @@ const unsigned int RECV_BUF_MAX_SIZE = 1024; //max total read buf size. Note: DO
 http_response_t *handle_redirect_get(struct http_response* hresp, char* custom_headers)
 {
 	if(hresp->status_code_int > 300 && hresp->status_code_int < 399)
-	{
-        http_response_free(hresp);  //free the 1st http response pointer if http is redirected.
-        
+	{        
         DPRINT("redirect get\n");
 		char *token = strtok(hresp->response_headers, "\r\n");
 		while(token != NULL)
 		{
 			if(str_contains(token, "Location:"))
-			{
+			{              
+                http_response_free(hresp);  //free the 1st http response pointer if http is redirected.
 				/* Extract url */
 				char *location = str_replace("Location: ", "", token);
 				return http_get(location, custom_headers);
@@ -94,14 +93,16 @@ http_response_t *handle_redirect_post(struct http_response* hresp, char* custom_
 {
 	if(hresp->status_code_int > 300 && hresp->status_code_int < 399)
 	{        
-        http_response_free(hresp);  //free the 1st http response pointer if http is redirected.
         
         DPRINT("debug");
 		char *token = strtok(hresp->response_headers, "\r\n");
 		while(token != NULL)
-		{
+		{            
 			if(str_contains(token, "Location:"))
-			{
+			{        
+                
+                DPRINT("debug");
+                //http_response_free(hresp);  //free the 1st http response pointer if http is redirected.
 				/* Extract url */
 				char *location = str_replace("Location: ", "", token);
 				return http_post(location, custom_headers, post_data);
@@ -204,7 +205,7 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     }
 
     printf("... socket send success\n");
-    printf("http_req 1, heap_size: %d\n",esp_get_free_heap_size());
+    printf("http_req 0, heap_size: %d\n",esp_get_free_heap_size());
 
     /* Recieve HTTP response into response*/
 	char *response = (char*)malloc(1);
@@ -222,7 +223,7 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
             break;
         }
 	}
-   // printf("\n------------------\n%s\n------------------\n",response);
+    //printf("\n------------------\n%s\n------------------\n",response);
     //printf("\n------------------\n%s\n------------------\n","response");
     
 	if (recived_len < 0)
@@ -245,7 +246,7 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     //printf("\n------------------\n%s\n------------------\n",response);
 
 #if 1
-    printf("http_req 2, heap_size: %d\n",esp_get_free_heap_size());
+    printf("http_req 1, heap_size: %d\n",esp_get_free_heap_size());
     /* Parse status code and text */
 	char *status_line = get_until(response, "\r\n");    
 	char *status_line_r = str_replace("HTTP/1.1 ", "", status_line);    
@@ -259,7 +260,7 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     free(status_line_r);
 
     
-    printf("http_req 3, heap_size: %d\n",esp_get_free_heap_size());
+    printf("http_req 2, heap_size: %d\n",esp_get_free_heap_size());
     
     hresp->status_code = status_code;
 	hresp->status_code_int = atoi(status_code);
@@ -291,7 +292,7 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
 
     free(response);
 
-    printf("http_req 2, heap_size: %d\n",esp_get_free_heap_size());
+    printf("http_req 3, heap_size: %d\n",esp_get_free_heap_size());
 
 	/* Return response */
 	return hresp;
@@ -375,9 +376,11 @@ http_response_t *http_get(char *url, char *custom_headers)
 
 	/* Make request and return response */
 	http_response_t *hresp = http_req(http_headers, purl);
+
+    return hresp;
         
 	/* Handle redirect */
-	return handle_redirect_get(hresp, custom_headers);
+	//return handle_redirect_get(hresp, custom_headers);
 }
 
 /*
@@ -464,9 +467,10 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
 
 	/* Make request and return response */
 	http_response_t *hresp = http_req(http_headers, purl);
+    return hresp;
 
 	/* Handle redirect */
-	return handle_redirect_post(hresp, custom_headers, post_data);
+	//return handle_redirect_post(hresp, custom_headers, post_data);
     
 }
 

@@ -3,5 +3,6 @@
 - reference from https://github.com/langhai/http-client-c.git
   - [x] http get
   - [x] http post 
+  - Do not support following functionalities.
   - [ ] http get redirect
-  - [x] http post redirect
+  - [ ] http post redirect

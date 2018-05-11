@@ -92,30 +92,30 @@ void app_main()
 #endif
 
 #if 0
-    //memset(hresp,0, sizeof(http_response_t));
     http_response_t *hresp = http_get("http://www.baidu.com", NULL);
     printf("s_code: %s\n", hresp->status_code);
     printf("s_code_int: %d\n", hresp->status_code_int);
     printf("s_text: %s\n", hresp->status_text);    
     printf("body: \n%s\n", hresp->body);
 
-    //http_response_free(hresp);
+    http_response_free(hresp);
     
     printf("done\n");
 #endif
 
-#if 0
+#if 1
    http_response_t *hresp = http_post("http://www.baidu.com", NULL,"");
     printf("s_code: %s\n", hresp->status_code);
     printf("s_code_int: %d\n", hresp->status_code_int);
     printf("s_text: %s\n", hresp->status_text);    
     printf("body: \n%s\n", hresp->body);
 
-    //http_response_free(hresp);
+    http_response_free(hresp);
     
     printf("done2\n");
 #endif
 
+#if 0
     http_response_t *hresp = http_get("http://api.openweathermap.org/data/2.5/forecast/daily?id=1790630&mode=json&units=metric&cnt=1&appid=69e96c570859995c79a7f1dd9a40be3c ", NULL);
     printf("s_code: %s\n", hresp->status_code);
     printf("s_code_int: %d\n", hresp->status_code_int);
@@ -125,7 +125,7 @@ void app_main()
     http_response_free(hresp);
 
     printf("done\n");
-
+#endif
     
     
 }

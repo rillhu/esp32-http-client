@@ -4,4 +4,4 @@
   - [x] http get
   - [x] http post 
   - [ ] http get redirect
-  - [ ] http post redirect
+  - [x] http post redirect

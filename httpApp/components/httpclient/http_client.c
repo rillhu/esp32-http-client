@@ -22,8 +22,8 @@
 
 
 const unsigned int BUF_SIZE = 1024; //max single read buf size
-const unsigned int RECV_BUF_MAX_SIZE = 10240; //max total read buf size
-
+const unsigned int RECV_BUF_MAX_SIZE = 2048; //max total read buf size. Note: DONOT set a too big number,
+                                             //which might cause crash due to redirect is recursive(occupy too many memory)
 
 /*
 	Handles redirect if needed for get requests
@@ -90,7 +90,8 @@ http_response_t *handle_redirect_head(struct http_response* hresp, char* custom_
 http_response_t *handle_redirect_post(struct http_response* hresp, char* custom_headers, char *post_data)
 {
 	if(hresp->status_code_int > 300 && hresp->status_code_int < 399)
-	{
+	{        
+        http_response_free(hresp);  //free the 1st http response pointer if http is redirected.
         
         DPRINT("debug");
 		char *token = strtok(hresp->response_headers, "\r\n");
@@ -274,7 +275,7 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
 	/* Parse body */
 	char *body = strstr(response, "\r\n\r\n");
     
-    DPRINT("debug");
+    DPRINT("debug: %s", body);
 	body = str_replace("\r\n\r\n", "", body);
     
     DPRINT("debug");
@@ -392,7 +393,7 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
 
     printf("url: %s\n", purl->host);
     if(purl->path != NULL)
-        printf("url: %s\n", purl->path);
+        printf("path: %s\n", purl->path);
     if(purl->query!=NULL)
         printf("query: %s\n", purl->query);
 
@@ -441,6 +442,9 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
 		/* Add to header */
 		http_headers = (char*)realloc(http_headers, strlen(http_headers) + strlen(auth_header) + 2);
 		sprintf(http_headers, "%s%s", http_headers, auth_header);
+
+        free(upwd);
+        free(auth_header);
 	}
     DPRINT("debug");
 

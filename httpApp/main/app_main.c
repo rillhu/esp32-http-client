@@ -57,6 +57,73 @@ static void initialise_wifi(void)
     esp_wifi_connect();
 }
 
+
+void http_task(void *pvParameters)
+{
+
+    (void)pvParameters;
+    while(1){
+#if 0
+        parsed_url_t_2 *purl = parse_url("http://www.baidu.com");
+        printf("uri: %s\n",purl->uri);    
+        printf("scheme: %s\n",purl->scheme);    
+        printf("host: %s\n",purl->host);    
+        printf("ip: %s\n",purl->ip);    
+        printf("port: %s\n",purl->port);
+        http_response_t *hresp = http_req("GET / HTTP/1.1\r\nHost:www.baidu.com\r\nConnection:close\r\n\r\n",purl);
+        printf("s_code: %s\n", hresp->status_code);
+        printf("s_code_int: %d\n", hresp->status_code_int);
+        printf("s_text: %s\n", hresp->status_text);    
+        printf("body222: \n%s\n", hresp->body);
+        
+        http_response_free(hresp);
+#endif
+
+#if 1
+        char * url = "http://www.baidu.com";
+        http_response_t *hresp = http_get(url, NULL);
+        if(hresp != NULL){
+            printf("s_code: %s\n", hresp->status_code);
+            printf("s_code_int: %d\n", hresp->status_code_int);
+            printf("s_text: %s\n", hresp->status_text);    
+            printf("body: \n%s\n", hresp->body);
+            http_response_free(hresp);            
+            printf("done1\n");
+        }
+        
+        printf("done2\n");
+#endif
+
+        //printf("done1, heap_size: %d\n",system_get_free_heap_size());
+
+#if 0
+        http_response_t *hresp = http_post("http://www.baidu.com", NULL,"");
+        printf("s_code: %s\n", hresp->status_code);
+        printf("s_code_int: %d\n", hresp->status_code_int);
+        printf("s_text: %s\n", hresp->status_text);    
+        printf("body: \n%s\n", hresp->body);
+
+        http_response_free(hresp);
+        
+        //printf("done2, heap_size: %d\n",system_get_free_heap_size());
+#endif
+
+#if 0
+        http_response_t *hresp = http_get("http://api.openweathermap.org/data/2.5/forecast/daily?id=1790630&mode=json&units=metric&cnt=1&appid=69e96c570859995c79a7f1dd9a40be3c ", NULL);
+        printf("s_code: %s\n", hresp->status_code);
+        printf("s_code_int: %d\n", hresp->status_code_int);
+        printf("s_text: %s\n", hresp->status_text);    
+        printf("body: \n%s\n", hresp->body);
+
+        http_response_free(hresp);
+
+        printf("done\n");
+#endif
+
+        vTaskDelay(2000 / portTICK_RATE_MS);
+        printf("start again\n");
+    }
+}
 void app_main()
 {
     nvs_flash_init();
@@ -75,58 +142,9 @@ void app_main()
         tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info);
     }
 
-    vTaskDelay(2000 / portTICK_RATE_MS);
-
-#if 0
-    parsed_url_t_2 *purl = parse_url("http://www.baidu.com");
-    printf("uri: %s\n",purl->uri);    
-    printf("scheme: %s\n",purl->scheme);    
-    printf("host: %s\n",purl->host);    
-    printf("ip: %s\n",purl->ip);    
-    printf("port: %s\n",purl->port);
-    http_response_t *hresp = http_req("GET / HTTP/1.1\r\nHost:www.baidu.com\r\nConnection:close\r\n\r\n",purl);
-    printf("s_code: %s\n", hresp->status_code);
-    printf("s_code_int: %d\n", hresp->status_code_int);
-    printf("s_text: %s\n", hresp->status_text);    
-    printf("body: \n%s\n", hresp->body);
-#endif
-
-#if 0
-    http_response_t *hresp = http_get("http://www.baidu.com", NULL);
-    printf("s_code: %s\n", hresp->status_code);
-    printf("s_code_int: %d\n", hresp->status_code_int);
-    printf("s_text: %s\n", hresp->status_text);    
-    printf("body: \n%s\n", hresp->body);
-
-    http_response_free(hresp);
+    vTaskDelay(2000 / portTICK_RATE_MS);  
     
-    printf("done\n");
-#endif
-
-#if 1
-   http_response_t *hresp = http_post("http://www.baidu.com", NULL,"");
-    printf("s_code: %s\n", hresp->status_code);
-    printf("s_code_int: %d\n", hresp->status_code_int);
-    printf("s_text: %s\n", hresp->status_text);    
-    printf("body: \n%s\n", hresp->body);
-
-    http_response_free(hresp);
-    
-    printf("done2\n");
-#endif
-
-#if 0
-    http_response_t *hresp = http_get("http://api.openweathermap.org/data/2.5/forecast/daily?id=1790630&mode=json&units=metric&cnt=1&appid=69e96c570859995c79a7f1dd9a40be3c ", NULL);
-    printf("s_code: %s\n", hresp->status_code);
-    printf("s_code_int: %d\n", hresp->status_code_int);
-    printf("s_text: %s\n", hresp->status_text);    
-    printf("body: \n%s\n", hresp->body);
-
-    http_response_free(hresp);
-
-    printf("done\n");
-#endif
-    
+    xTaskCreate(&http_task, "http_task", 1024*80, NULL, 5, NULL);
     
 }
 

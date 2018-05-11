@@ -22,7 +22,7 @@
 
 
 const unsigned int BUF_SIZE = 1024; //max single read buf size
-const unsigned int RECV_BUF_MAX_SIZE = 2048; //max total read buf size. Note: DONOT set a too big number,
+const unsigned int RECV_BUF_MAX_SIZE = 1024; //max total read buf size. Note: DONOT set a too big number,
                                              //which might cause crash due to redirect is recursive(occupy too many memory)
 
 /*
@@ -211,12 +211,12 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
 		response = (char*)realloc(response, strlen(response) + strlen(BUF) + 1);
 		sprintf(response, "%s%s", response, BUF);
         
-        if(strlen(response)>RECV_BUF_MAX_SIZE){
+        if(strlen(response)>=RECV_BUF_MAX_SIZE){
             printf("recv buf is full\n");
             break;
         }
 	}
-    //printf("\n------------------\n%s\n------------------\n",response);
+    printf("\n------------------\n%s\n------------------\n",response);
     
 	if (recived_len < 0)
     {
@@ -235,25 +235,15 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     printf("close fd\n");
 
     
-    DPRINT("debug");
     /* Parse status code and text */
-	char *status_line = get_until(response, "\r\n");
-    
-    DPRINT("debug");
+	char *status_line = get_until(response, "\r\n");    
 	status_line = str_replace("HTTP/1.1 ", "", status_line);
     
-    DPRINT("debug");
     
-	char *status_code = str_ndup(status_line, 4);
-    
-    DPRINT("debug");
+	char *status_code = str_ndup(status_line, 4);    
 	//status_code = str_replace(" ", "", status_code); //HTTP/1.1 response does not contain ',' anymore.   
-	char *status_text = str_replace(status_code, "", status_line);
-    
-    DPRINT("debug");
-    status_text = str_replace(" ", "", status_text);
-    
-    DPRINT("debug");
+	char *status_text = str_replace(status_code, "", status_line);    
+    status_text = str_replace(" ", "", status_text);    
 
     hresp->status_code = status_code;
 	hresp->status_code_int = atoi(status_code);
@@ -263,26 +253,18 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
 	char *headers = get_until(response, "\r\n\r\n");
 	hresp->response_headers = headers;
     
-    DPRINT("debug");
-
 	/* Assign request headers */
 	hresp->request_headers = http_headers;
 
 	/* Assign request url */
 	hresp->request_uri = purl;
-    DPRINT("debug");
 
 	/* Parse body */
-	char *body = strstr(response, "\r\n\r\n");
-    
-    DPRINT("debug: %s", body);
-	body = str_replace("\r\n\r\n", "", body);
-    
-    DPRINT("debug");
+	char *body = strstr(response, "\r\n\r\n");    
+    //DPRINT("debug: %s", body);
+	body = str_replace("\r\n\r\n", "", body);    
 	hresp->body = body;
     
-    DPRINT("debug");
-
 	/* Return response */
 	return hresp;
 }
@@ -373,9 +355,7 @@ http_response_t *http_get(char *url, char *custom_headers)
 	Makes a HTTP POST request to the given url
 */
 http_response_t *http_post(char *url, char *custom_headers, char *post_data)
-{
-    
-    DPRINT("debug");
+{    
 	/* Parse url */
 	parsed_url_t_2  *purl = parse_url(url);
 	if(purl == NULL)
@@ -383,14 +363,10 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
 		printf("Unable to parse url");
 		return NULL;
 	}
-    
-    DPRINT("debug");
 
 	/* Declare variable */
 	char *http_headers = (char*)malloc(1024);
     
-    DPRINT("debug");
-
     printf("url: %s\n", purl->host);
     if(purl->path != NULL)
         printf("path: %s\n", purl->path);
@@ -422,7 +398,6 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
 		}
 	}
 
-    DPRINT("debug");
 	/* Handle authorisation if needed */
 	if(purl->username != NULL)
 	{
@@ -446,7 +421,6 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
         free(upwd);
         free(auth_header);
 	}
-    DPRINT("debug");
 
 	if(custom_headers != NULL)
 	{
@@ -459,11 +433,8 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
 	}
 	http_headers = (char*)realloc(http_headers, strlen(http_headers) + 1);
 
-    DPRINT("debug");
-
 	/* Make request and return response */
 	http_response_t *hresp = http_req(http_headers, purl);
-    DPRINT("debug");
 
 	/* Handle redirect */
 	return handle_redirect_post(hresp, custom_headers, post_data);

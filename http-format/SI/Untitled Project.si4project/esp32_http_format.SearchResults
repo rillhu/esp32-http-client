@@ -1,0 +1,15 @@
+---- http_response Matches (19 in 2 files) ----
+http_client.c (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) line 32 : struct http_response* handle_redirect_get(struct http_response* hresp, char* custom_headers)
+http_client.c (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) line 61 : struct http_response* handle_redirect_head(struct http_response* hresp, char* custom_headers)
+http_client.c (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) line 89 : struct http_response* handle_redirect_post(struct http_response* hresp, char* custom_headers, char *post_data)
+http_client.c (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) line 117 : struct http_response* http_req(char *http_headers, struct parsed_url_2 *purl)
+http_req in http_client.c (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) : 	struct http_response *hresp = (struct http_response*)malloc(sizeof(struct http_response));
+http_client.c (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) line 265 : struct http_response* http_get(char *url, char *custom_headers)
+http_get in http_client.c (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) : 	struct http_response *hresp = http_req(http_headers, purl);
+http_client.c (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) line 344 : struct http_response* http_post(char *url, char *custom_headers, char *post_data)
+http_post in http_client.c (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) : 	struct http_response *hresp = http_req(http_headers, purl);
+http_client.c (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) line 423 : struct http_response* http_head(char *url, char *custom_headers)
+http_head in http_client.c (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) : 	struct http_response *hresp = http_req(http_headers, purl);
+http_client.c (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) line 501 : struct http_response* http_options(char *url)
+http_options in http_client.c (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) : 	struct http_response *hresp = http_req(http_headers, purl);
+http_client.h (C:\Users\hongf\Work\02_D-Projects\ESP32\esp-idf-prj-180419\http-format\components\httpclient) line 7 : typedef struct http_response

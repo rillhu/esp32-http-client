@@ -8,12 +8,12 @@
 #include "urlparser.h"
 
 /*
-	Free memory of parsed url
+    Free memory of parsed url
 */
 void parsed_url_free_2(parsed_url_t_2 *purl)
 {
     if ( NULL != purl ) 
-	{
+    {
         if ( NULL != purl->scheme ) free(purl->scheme);
         if ( NULL != purl->host ) free(purl->host);
         //if ( NULL != purl->port ) free(purl->port); 
@@ -31,22 +31,22 @@ void parsed_url_free_2(parsed_url_t_2 *purl)
 }
 
 /*
-	Retrieves the IP adress of a hostname
+    Retrieves the IP adress of a hostname
 */
 char* hostname_to_ip_2(char *hostname)
 {
-//	char *ip = "0.0.0.0";
-	struct hostent *h;
-	if ((h=gethostbyname(hostname)) == NULL) 
-	{  
-		printf("gethostbyname");
-		return NULL;
-	}
-	return inet_ntoa(*((struct in_addr *)h->h_addr));
+//  char *ip = "0.0.0.0";
+    struct hostent *h;
+    if ((h=gethostbyname(hostname)) == NULL) 
+    {  
+        printf("gethostbyname");
+        return NULL;
+    }
+    return inet_ntoa(*((struct in_addr *)h->h_addr));
 }
 
 /*
-	Check whether the character is permitted in scheme string
+    Check whether the character is permitted in scheme string
 */
 int is_scheme_char_2(int c)
 {
@@ -54,15 +54,15 @@ int is_scheme_char_2(int c)
 }
 
 /*
-	Parses a specified URL and returns the structure named 'parsed_url_2'
-	Implented according to:
-	RFC 1738 - http://www.ietf.org/rfc/rfc1738.txt
-	RFC 3986 -  http://www.ietf.org/rfc/rfc3986.txt
+    Parses a specified URL and returns the structure named 'parsed_url_2'
+    Implented according to:
+    RFC 1738 - http://www.ietf.org/rfc/rfc1738.txt
+    RFC 3986 -  http://www.ietf.org/rfc/rfc3986.txt
 */
 parsed_url_t_2  *parse_url(const char *url)
 {
-	
-	/* Define variable */
+    
+    /* Define variable */
     parsed_url_t_2  *purl;
     const char *tmpstr;
     const char *curstr;
@@ -74,7 +74,7 @@ parsed_url_t_2  *parse_url(const char *url)
     /* Allocate the parsed url storage */
     purl = (parsed_url_t_2 *)malloc(sizeof(parsed_url_t_2 ));
     if ( NULL == purl ) 
-	{
+    {
         return NULL;
     }
     purl->scheme = NULL;
@@ -95,9 +95,9 @@ parsed_url_t_2  *parse_url(const char *url)
     /* Read scheme */
     tmpstr = strchr(curstr, ':');
     if ( NULL == tmpstr ) 
-	{
+    {
         parsed_url_free_2(purl); fprintf(stderr, "Error on line %d (%s)\n", __LINE__, __FILE__);
-		
+        
         return NULL;
     }
 
@@ -106,9 +106,9 @@ parsed_url_t_2  *parse_url(const char *url)
 
     /* Check restrictions */
     for ( i = 0; i < len; i++ ) 
-	{
+    {
         if (is_scheme_char_2(curstr[i]) == 0) 
-		{
+        {
             /* Invalid format */
             parsed_url_free_2(purl); fprintf(stderr, "Error on line %d (%s)\n", __LINE__, __FILE__);
             return NULL;
@@ -117,9 +117,9 @@ parsed_url_t_2  *parse_url(const char *url)
     /* Copy the scheme to the storage */
     purl->scheme = (char*)malloc(sizeof(char) * (len + 1));
     if ( NULL == purl->scheme ) 
-	{
+    {
         parsed_url_free_2(purl); fprintf(stderr, "Error on line %d (%s)\n", __LINE__, __FILE__);
-		
+        
         return NULL;
     }
 
@@ -128,7 +128,7 @@ parsed_url_t_2  *parse_url(const char *url)
 
     /* Make the character to lower if it is upper case. */
     for ( i = 0; i < len; i++ ) 
-	{
+    {
         purl->scheme[i] = tolower((int)purl->scheme[i]);
     }
 
@@ -142,9 +142,9 @@ parsed_url_t_2  *parse_url(const char *url)
      */
     /* Eat "//" */
     for ( i = 0; i < 2; i++ ) 
-	{
+    {
         if ( '/' != *curstr ) 
-		{
+        {
             parsed_url_free_2(purl); fprintf(stderr, "Error on line %d (%s)\n", __LINE__, __FILE__);
             return NULL;
         }
@@ -155,15 +155,15 @@ parsed_url_t_2  *parse_url(const char *url)
     userpass_flag = 0;
     tmpstr = curstr;
     while ( '\0' != *tmpstr ) 
-	{
+    {
         if ( '@' == *tmpstr ) 
-		{
+        {
             /* Username and password are specified */
             userpass_flag = 1;
             break;
         } 
-		else if ( '/' == *tmpstr ) 
-		{
+        else if ( '/' == *tmpstr ) 
+        {
             /* End of <host>:<port> specification */
             userpass_flag = 0;
             break;
@@ -174,16 +174,16 @@ parsed_url_t_2  *parse_url(const char *url)
     /* User and password specification */
     tmpstr = curstr;
     if ( userpass_flag ) 
-	{
+    {
         /* Read username */
         while ( '\0' != *tmpstr && ':' != *tmpstr && '@' != *tmpstr ) 
-		{
+        {
             tmpstr++;
         }
         len = tmpstr - curstr;
         purl->username = (char*)malloc(sizeof(char) * (len + 1));
         if ( NULL == purl->username ) 
-		{
+        {
             parsed_url_free_2(purl); fprintf(stderr, "Error on line %d (%s)\n", __LINE__, __FILE__);
             return NULL;
         }
@@ -193,20 +193,20 @@ parsed_url_t_2  *parse_url(const char *url)
         /* Proceed current pointer */
         curstr = tmpstr;
         if ( ':' == *curstr ) 
-		{
+        {
             /* Skip ':' */
             curstr++;
             
             /* Read password */
             tmpstr = curstr;
             while ( '\0' != *tmpstr && '@' != *tmpstr ) 
-			{
+            {
                 tmpstr++;
             }
             len = tmpstr - curstr;
             purl->password = (char*)malloc(sizeof(char) * (len + 1));
             if ( NULL == purl->password ) 
-			{
+            {
                 parsed_url_free_2(purl); fprintf(stderr, "Error on line %d (%s)\n", __LINE__, __FILE__);
                 return NULL;
             }
@@ -216,7 +216,7 @@ parsed_url_t_2  *parse_url(const char *url)
         }
         /* Skip '@' */
         if ( '@' != *curstr ) 
-		{
+        {
             parsed_url_free_2(purl); fprintf(stderr, "Error on line %d (%s)\n", __LINE__, __FILE__);
             return NULL;
         }
@@ -224,24 +224,24 @@ parsed_url_t_2  *parse_url(const char *url)
     }
 
     if ( '[' == *curstr ) 
-	{
+    {
         bracket_flag = 1;
     } 
-	else 
-	{
+    else 
+    {
         bracket_flag = 0;
     }
     /* Proceed on by delimiters with reading host */
     tmpstr = curstr;
     while ( '\0' != *tmpstr ) {
         if ( bracket_flag && ']' == *tmpstr )
- 		{
+        {
             /* End of IPv6 address. */
             tmpstr++;
             break;
         } 
-		else if ( !bracket_flag && (':' == *tmpstr || '/' == *tmpstr) ) 
-		{
+        else if ( !bracket_flag && (':' == *tmpstr || '/' == *tmpstr) ) 
+        {
             /* Port number is specified. */
             break;
         }
@@ -250,7 +250,7 @@ parsed_url_t_2  *parse_url(const char *url)
     len = tmpstr - curstr;
     purl->host = (char*)malloc(sizeof(char) * (len + 1));
     if ( NULL == purl->host || len <= 0 ) 
-	{
+    {
         parsed_url_free_2(purl); fprintf(stderr, "Error on line %d (%s)\n", __LINE__, __FILE__);
         return NULL;
     }
@@ -260,18 +260,18 @@ parsed_url_t_2  *parse_url(const char *url)
 
     /* Is port number specified? */
     if ( ':' == *curstr ) 
-	{
+    {
         curstr++;
         /* Read port number */
         tmpstr = curstr;
         while ( '\0' != *tmpstr && '/' != *tmpstr ) 
-		{
+        {
             tmpstr++;
         }
         len = tmpstr - curstr;
         purl->port = (char*)malloc(sizeof(char) * (len + 1));
         if ( NULL == purl->port ) 
-		{
+        {
             parsed_url_free_2(purl); fprintf(stderr, "Error on line %d (%s)\n", __LINE__, __FILE__);
             return NULL;
         }
@@ -279,27 +279,27 @@ parsed_url_t_2  *parse_url(const char *url)
         purl->port[len] = '\0';
         curstr = tmpstr;
     }
-	else
-	{
-		purl->port = "80";
-	}
-	
-	/* Get ip */
-	char *ip = hostname_to_ip_2(purl->host);
-	purl->ip = ip;
-	
-	/* Set uri */
-	purl->uri = (char*)url;
+    else
+    {
+        purl->port = "80";
+    }
+    
+    /* Get ip */
+    char *ip = hostname_to_ip_2(purl->host);
+    purl->ip = ip;
+    
+    /* Set uri */
+    purl->uri = (char*)url;
 
     /* End of the string */
     if ( '\0' == *curstr ) 
-	{
+    {
         return purl;
     }
 
     /* Skip '/' */
     if ( '/' != *curstr ) 
-	{
+    {
         parsed_url_free_2(purl); fprintf(stderr, "Error on line %d (%s)\n", __LINE__, __FILE__);
         return NULL;
     }
@@ -308,13 +308,13 @@ parsed_url_t_2  *parse_url(const char *url)
     /* Parse path */
     tmpstr = curstr;
     while ( '\0' != *tmpstr && '#' != *tmpstr  && '?' != *tmpstr ) 
-	{
+    {
         tmpstr++;
     }
     len = tmpstr - curstr;
     purl->path = (char*)malloc(sizeof(char) * (len + 1));
     if ( NULL == purl->path ) 
-	{
+    {
         parsed_url_free_2(purl); fprintf(stderr, "Error on line %d (%s)\n", __LINE__, __FILE__);
         return NULL;
     }
@@ -324,19 +324,19 @@ parsed_url_t_2  *parse_url(const char *url)
 
     /* Is query specified? */
     if ( '?' == *curstr ) 
-	{
+    {
         /* Skip '?' */
         curstr++;
         /* Read query */
         tmpstr = curstr;
         while ( '\0' != *tmpstr && '#' != *tmpstr ) 
-		{
+        {
             tmpstr++;
         }
         len = tmpstr - curstr;
         purl->query = (char*)malloc(sizeof(char) * (len + 1));
         if ( NULL == purl->query ) 
-		{
+        {
             parsed_url_free_2(purl); fprintf(stderr, "Error on line %d (%s)\n", __LINE__, __FILE__);
             return NULL;
         }
@@ -347,19 +347,19 @@ parsed_url_t_2  *parse_url(const char *url)
 
     /* Is fragment specified? */
     if ( '#' == *curstr ) 
-	{
+    {
         /* Skip '#' */
         curstr++;
         /* Read fragment */
         tmpstr = curstr;
         while ( '\0' != *tmpstr ) 
-		{
+        {
             tmpstr++;
         }
         len = tmpstr - curstr;
         purl->fragment = (char*)malloc(sizeof(char) * (len + 1));
         if ( NULL == purl->fragment )
- 		{
+        {
             parsed_url_free_2(purl); fprintf(stderr, "Error on line %d (%s)\n", __LINE__, __FILE__);
             return NULL;
         }
@@ -367,7 +367,7 @@ parsed_url_t_2  *parse_url(const char *url)
         purl->fragment[len] = '\0';
         curstr = tmpstr;
     }
-	return purl;
+    return purl;
 }
 
 

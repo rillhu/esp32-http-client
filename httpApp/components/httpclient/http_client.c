@@ -28,7 +28,7 @@ const unsigned int BUF_SIZE = 1024; //max single read buf size
 const unsigned int RECV_BUF_MAX_SIZE = 1024; //max total read buf size.
 
 /*
-	Handles redirect if needed for get requests
+    Handles redirect if needed for get requests
 */
 http_response_t *handle_redirect_get(struct http_response* hresp, char* custom_headers)
 {
@@ -58,35 +58,35 @@ http_response_t *handle_redirect_get(struct http_response* hresp, char* custom_h
 }
 
 /*
-	Handles redirect if needed for head requests
+    Handles redirect if needed for head requests
 */
 http_response_t *handle_redirect_head(struct http_response* hresp, char* custom_headers)
 {
-	if(hresp->status_code_int > 300 && hresp->status_code_int < 399)
-	{
-		char *token = strtok(hresp->response_headers, "\r\n");
-		while(token != NULL)
-		{
-			if(str_contains(token, "Location:"))
-			{
-				/* Extract url */
-				char *location = str_replace("Location: ", "", token);
-				return http_head(location, custom_headers);
-			}
-			token = strtok(NULL, "\r\n");
-		}
-	}
-	else
-	{
-		/* We're not dealing with a redirect, just return the same structure */
-		return hresp;
-	}
-    
+    if(hresp->status_code_int > 300 && hresp->status_code_int < 399)
+    {
+        char *token = strtok(hresp->response_headers, "\r\n");
+        while(token != NULL)
+        {
+            if(str_contains(token, "Location:"))
+            {
+                /* Extract url */
+                char *location = str_replace("Location: ", "", token);
+                return http_head(location, custom_headers);
+            }
+            token = strtok(NULL, "\r\n");
+        }
+    }
+    else
+    {
+        /* We're not dealing with a redirect, just return the same structure */
+        return hresp;
+    }
+
     return hresp;
 }
 
 /*
-	Handles redirect if needed for post requests
+    Handles redirect if needed for post requests
 */
 http_response_t *handle_redirect_post(struct http_response* hresp, char* custom_headers, char *post_data)
 {
@@ -104,7 +104,7 @@ http_response_t *handle_redirect_post(struct http_response* hresp, char* custom_
                 char *location = str_replace("Location: ", "", token);
                 return http_post(location, custom_headers, post_data);
             }
-        	token = strtok(NULL, "\r\n");
+            token = strtok(NULL, "\r\n");
         }
     }
     else
@@ -118,7 +118,7 @@ http_response_t *handle_redirect_post(struct http_response* hresp, char* custom_
 }
 
 /*
-	Makes a HTTP request and returns the response
+    Makes a HTTP request and returns the response
 */
 http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
 {
@@ -141,7 +141,7 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     hresp->request_headers = NULL;
     hresp->response_headers = NULL;
     hresp->status_code = NULL;
-    //	hresp->status_text = NULL;
+    //  hresp->status_text = NULL;
 
     DPRINT("http_add 1, heap_size: %d\n",esp_get_free_heap_size());
 
@@ -265,8 +265,8 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
             SSL_CTX_free(ctx);
             ctx = NULL;
 #endif
-			return NULL;
-		}
+            return NULL;
+        }
         sent += tmpres;
     }
 
@@ -315,7 +315,7 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     response = (char*)realloc(response, strlen(response) + 1);
     response[strlen(response)] = '\0';  //This can avoid corrupt heap related issues
 
-	/* Close socket */
+    /* Close socket */
 #ifdef SSL_ENABLE
     SSL_shutdown(ssl);
     SSL_free(ssl);
@@ -372,108 +372,108 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
 }
 
 /*
-	Makes a HTTP GET request to the given url
+    Makes a HTTP GET request to the given url
 */
 http_response_t *http_get(char *url, char *custom_headers)
 {
-	/* Parse url */
-	parsed_url_t_2  *purl = parse_url(url);
-	if(purl == NULL)
-	{
-		printf("Unable to parse url");
-		return NULL;
-	}
-    
+    /* Parse url */
+    parsed_url_t_2  *purl = parse_url(url);
+    if(purl == NULL)
+    {
+        printf("Unable to parse url");
+        return NULL;
+    }
+
     DPRINT("url: %s\n", purl->host);
+        if(purl->path != NULL)
+    DPRINT("path: %s\n", purl->path);
+        if(purl->query!=NULL)
+    DPRINT("query: %s\n", purl->query);
+
+    /* Declare variable */
+    char *http_headers = (char*)malloc(1024);
+
+    /* Build query/headers */
     if(purl->path != NULL)
-        DPRINT("path: %s\n", purl->path);
-    if(purl->query!=NULL)
-        DPRINT("query: %s\n", purl->query);
+    {
+        if(purl->query != NULL)
+        {
+            sprintf(http_headers, "GET /%s?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->path, purl->query, purl->host);
+        }
+        else
+        {
+            sprintf(http_headers, "GET /%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->path, purl->host);
+        }
+    }
+    else
+    {
+        if(purl->query != NULL)
+        {
+            sprintf(http_headers, "GET /?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->query, purl->host);
+        }
+        else
+        {
+            sprintf(http_headers, "GET / HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->host);
+        }
+    }
 
-	/* Declare variable */
-	char *http_headers = (char*)malloc(1024);
+    /* Handle authorisation if needed */
+    if(purl->username != NULL)
+    {
+        /* Format username:password pair */
+        char *upwd = (char*)malloc(1024);
+        sprintf(upwd, "%s:%s", purl->username, purl->password);
+        upwd = (char*)realloc(upwd, strlen(upwd) + 1);
 
-	/* Build query/headers */
-	if(purl->path != NULL)
-	{
-		if(purl->query != NULL)
-		{
-			sprintf(http_headers, "GET /%s?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->path, purl->query, purl->host);
-		}
-		else
-		{
-			sprintf(http_headers, "GET /%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->path, purl->host);
-		}
-	}
-	else
-	{
-		if(purl->query != NULL)
-		{
-			sprintf(http_headers, "GET /?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->query, purl->host);
-		}
-		else
-		{
-			sprintf(http_headers, "GET / HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->host);
-		}
-	}
+        /* Base64 encode */
+        char *base64 = base64_encode(upwd);
 
-	/* Handle authorisation if needed */
-	if(purl->username != NULL)
-	{
-		/* Format username:password pair */
-		char *upwd = (char*)malloc(1024);
-		sprintf(upwd, "%s:%s", purl->username, purl->password);
-		upwd = (char*)realloc(upwd, strlen(upwd) + 1);
+        /* Form header */
+        char *auth_header = (char*)malloc(1024);
+        sprintf(auth_header, "Authorization: Basic %s\r\n", base64);
+        auth_header = (char*)realloc(auth_header, strlen(auth_header) + 1);
 
-		/* Base64 encode */
-		char *base64 = base64_encode(upwd);
-
-		/* Form header */
-		char *auth_header = (char*)malloc(1024);
-		sprintf(auth_header, "Authorization: Basic %s\r\n", base64);
-		auth_header = (char*)realloc(auth_header, strlen(auth_header) + 1);
-
-		/* Add to header */
-		http_headers = (char*)realloc(http_headers, strlen(http_headers) + strlen(auth_header) + 2);
-		sprintf(http_headers, "%s%s", http_headers, auth_header);
+        /* Add to header */
+        http_headers = (char*)realloc(http_headers, strlen(http_headers) + strlen(auth_header) + 2);
+        sprintf(http_headers, "%s%s", http_headers, auth_header);
 
         free(upwd);
         free(auth_header);
-	}
+    }
 
-	/* Add custom headers, and close */
-	if(custom_headers != NULL)
-	{
-		sprintf(http_headers, "%s%s\r\n", http_headers, custom_headers);
-	}
-	else
-	{
-		sprintf(http_headers, "%s\r\n", http_headers);
-	}
-	http_headers = (char*)realloc(http_headers, strlen(http_headers) + 1);
+    /* Add custom headers, and close */
+    if(custom_headers != NULL)
+    {
+        sprintf(http_headers, "%s%s\r\n", http_headers, custom_headers);
+    }
+    else
+    {
+        sprintf(http_headers, "%s\r\n", http_headers);
+    }
+    http_headers = (char*)realloc(http_headers, strlen(http_headers) + 1);
     http_headers[strlen(http_headers)] = '\0';
 
-	/* Make request and return response */
-	http_response_t *hresp = http_req(http_headers, purl);
+    /* Make request and return response */
+    http_response_t *hresp = http_req(http_headers, purl);
 
     return hresp;
         
-	/* Handle redirect */
-	//return handle_redirect_get(hresp, custom_headers);
+    /* Handle redirect */
+    //return handle_redirect_get(hresp, custom_headers);
 }
 
 /*
-	Makes a HTTP POST request to the given url
+    Makes a HTTP POST request to the given url
 */
 http_response_t *http_post(char *url, char *custom_headers, char *post_data)
 {    
-	/* Parse url */
-	parsed_url_t_2  *purl = parse_url(url);
-	if(purl == NULL)
-	{
-		printf("Unable to parse url");
-		return NULL;
-	}
+    /* Parse url */
+    parsed_url_t_2  *purl = parse_url(url);
+    if(purl == NULL)
+    {
+        printf("Unable to parse url");
+        return NULL;
+    }
 
     DPRINT("url: %s\n", purl->host);
     if(purl->path != NULL)
@@ -481,241 +481,241 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
     if(purl->query!=NULL)
         DPRINT("query: %s\n", purl->query);
 
-	/* Declare variable */
-	char *http_headers = (char*)malloc(1024);
+    /* Declare variable */
+    char *http_headers = (char*)malloc(1024);
 
-	/* Build query/headers */
-	if(purl->path != NULL)
-	{
-		if(purl->query != NULL)
-		{
-			sprintf(http_headers, "POST /%s?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\nContent-Length:%zu\r\nContent-Type:application/x-www-form-urlencoded\r\n", purl->path, purl->query, purl->host, strlen(post_data));
-		}
-		else
-		{
-			sprintf(http_headers, "POST /%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\nContent-Length:%zu\r\nContent-Type:application/x-www-form-urlencoded\r\n", purl->path, purl->host, strlen(post_data));
-		}
-	}
-	else
-	{
-		if(purl->query != NULL)
-		{
-			sprintf(http_headers, "POST /?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\nContent-Length:%zu\r\nContent-Type:application/x-www-form-urlencoded\r\n", purl->query, purl->host, strlen(post_data));
-		}
-		else
-		{
-			sprintf(http_headers, "POST / HTTP/1.1\r\nHost:%s\r\nConnection:close\r\nContent-Length:%zu\r\nContent-Type:application/x-www-form-urlencoded\r\n", purl->host, strlen(post_data));
-		}
-	}
+    /* Build query/headers */
+    if(purl->path != NULL)
+    {
+        if(purl->query != NULL)
+        {
+            sprintf(http_headers, "POST /%s?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\nContent-Length:%zu\r\nContent-Type:application/x-www-form-urlencoded\r\n", purl->path, purl->query, purl->host, strlen(post_data));
+        }
+        else
+        {
+            sprintf(http_headers, "POST /%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\nContent-Length:%zu\r\nContent-Type:application/x-www-form-urlencoded\r\n", purl->path, purl->host, strlen(post_data));
+        }
+    }
+    else
+    {
+        if(purl->query != NULL)
+        {
+            sprintf(http_headers, "POST /?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\nContent-Length:%zu\r\nContent-Type:application/x-www-form-urlencoded\r\n", purl->query, purl->host, strlen(post_data));
+        }
+        else
+        {
+            sprintf(http_headers, "POST / HTTP/1.1\r\nHost:%s\r\nConnection:close\r\nContent-Length:%zu\r\nContent-Type:application/x-www-form-urlencoded\r\n", purl->host, strlen(post_data));
+        }
+    }
 
-	/* Handle authorisation if needed */
-	if(purl->username != NULL)
-	{
-		/* Format username:password pair */
-		char *upwd = (char*)malloc(1024);
-		sprintf(upwd, "%s:%s", purl->username, purl->password);
-		upwd = (char*)realloc(upwd, strlen(upwd) + 1);
+    /* Handle authorisation if needed */
+    if(purl->username != NULL)
+    {
+        /* Format username:password pair */
+        char *upwd = (char*)malloc(1024);
+        sprintf(upwd, "%s:%s", purl->username, purl->password);
+        upwd = (char*)realloc(upwd, strlen(upwd) + 1);
 
-		/* Base64 encode */
-		char *base64 = base64_encode(upwd);
+        /* Base64 encode */
+        char *base64 = base64_encode(upwd);
 
-		/* Form header */
-		char *auth_header = (char*)malloc(1024);
-		sprintf(auth_header, "Authorization: Basic %s\r\n", base64);
-		auth_header = (char*)realloc(auth_header, strlen(auth_header) + 1);
+        /* Form header */
+        char *auth_header = (char*)malloc(1024);
+        sprintf(auth_header, "Authorization: Basic %s\r\n", base64);
+        auth_header = (char*)realloc(auth_header, strlen(auth_header) + 1);
 
-		/* Add to header */
-		http_headers = (char*)realloc(http_headers, strlen(http_headers) + strlen(auth_header) + 2);
-		sprintf(http_headers, "%s%s", http_headers, auth_header);
+        /* Add to header */
+        http_headers = (char*)realloc(http_headers, strlen(http_headers) + strlen(auth_header) + 2);
+        sprintf(http_headers, "%s%s", http_headers, auth_header);
 
         free(upwd);
         free(auth_header);
-	}
+    }
 
-	if(custom_headers != NULL)
-	{
-		sprintf(http_headers, "%s%s\r\n", http_headers, custom_headers);
-		sprintf(http_headers, "%s\r\n%s", http_headers, post_data);
-	}
-	else
-	{
-		sprintf(http_headers, "%s\r\n%s", http_headers, post_data);
-	}
-	http_headers = (char*)realloc(http_headers, strlen(http_headers) + 1);
+    if(custom_headers != NULL)
+    {
+        sprintf(http_headers, "%s%s\r\n", http_headers, custom_headers);
+        sprintf(http_headers, "%s\r\n%s", http_headers, post_data);
+    }
+    else
+    {
+        sprintf(http_headers, "%s\r\n%s", http_headers, post_data);
+    }
+    http_headers = (char*)realloc(http_headers, strlen(http_headers) + 1);
 
-	/* Make request and return response */
-	http_response_t *hresp = http_req(http_headers, purl);
+    /* Make request and return response */
+    http_response_t *hresp = http_req(http_headers, purl);
     return hresp;
 
-	/* Handle redirect */
-	//return handle_redirect_post(hresp, custom_headers, post_data);    
+    /* Handle redirect */
+    //return handle_redirect_post(hresp, custom_headers, post_data);    
 }
 
 /*
-	Makes a HTTP HEAD request to the given url
+    Makes a HTTP HEAD request to the given url
 */
 http_response_t *http_head(char *url, char *custom_headers)
 {
-	/* Parse url */
-	parsed_url_t_2  *purl = parse_url(url);
-	if(purl == NULL)
-	{
-		printf("Unable to parse url");
-		return NULL;
-	}
+    /* Parse url */
+    parsed_url_t_2  *purl = parse_url(url);
+    if(purl == NULL)
+    {
+        printf("Unable to parse url");
+        return NULL;
+    }
 
-	/* Declare variable */
-	char *http_headers = (char*)malloc(1024);
+    /* Declare variable */
+    char *http_headers = (char*)malloc(1024);
 
-	/* Build query/headers */
-	if(purl->path != NULL)
-	{
-		if(purl->query != NULL)
-		{
-			sprintf(http_headers, "HEAD /%s?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->path, purl->query, purl->host);
-		}
-		else
-		{
-			sprintf(http_headers, "HEAD /%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->path, purl->host);
-		}
-	}
-	else
-	{
-		if(purl->query != NULL)
-		{
-			sprintf(http_headers, "HEAD/?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->query, purl->host);
-		}
-		else
-		{
-			sprintf(http_headers, "HEAD / HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->host);
-		}
-	}
+    /* Build query/headers */
+    if(purl->path != NULL)
+    {
+        if(purl->query != NULL)
+        {
+            sprintf(http_headers, "HEAD /%s?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->path, purl->query, purl->host);
+        }
+        else
+        {
+            sprintf(http_headers, "HEAD /%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->path, purl->host);
+        }
+    }
+    else
+    {
+        if(purl->query != NULL)
+        {
+            sprintf(http_headers, "HEAD/?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->query, purl->host);
+        }
+        else
+        {
+            sprintf(http_headers, "HEAD / HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->host);
+        }
+    }
 
-	/* Handle authorisation if needed */
-	if(purl->username != NULL)
-	{
-		/* Format username:password pair */
-		char *upwd = (char*)malloc(1024);
-		sprintf(upwd, "%s:%s", purl->username, purl->password);
-		upwd = (char*)realloc(upwd, strlen(upwd) + 1);
+    /* Handle authorisation if needed */
+    if(purl->username != NULL)
+    {
+        /* Format username:password pair */
+        char *upwd = (char*)malloc(1024);
+        sprintf(upwd, "%s:%s", purl->username, purl->password);
+        upwd = (char*)realloc(upwd, strlen(upwd) + 1);
 
-		/* Base64 encode */
-		char *base64 = base64_encode(upwd);
+        /* Base64 encode */
+        char *base64 = base64_encode(upwd);
 
-		/* Form header */
-		char *auth_header = (char*)malloc(1024);
-		sprintf(auth_header, "Authorization: Basic %s\r\n", base64);
-		auth_header = (char*)realloc(auth_header, strlen(auth_header) + 1);
+        /* Form header */
+        char *auth_header = (char*)malloc(1024);
+        sprintf(auth_header, "Authorization: Basic %s\r\n", base64);
+        auth_header = (char*)realloc(auth_header, strlen(auth_header) + 1);
 
-		/* Add to header */
-		http_headers = (char*)realloc(http_headers, strlen(http_headers) + strlen(auth_header) + 2);
-		sprintf(http_headers, "%s%s", http_headers, auth_header);
-	}
+        /* Add to header */
+        http_headers = (char*)realloc(http_headers, strlen(http_headers) + strlen(auth_header) + 2);
+        sprintf(http_headers, "%s%s", http_headers, auth_header);
+    }
 
-	if(custom_headers != NULL)
-	{
-		sprintf(http_headers, "%s%s\r\n", http_headers, custom_headers);
-	}
-	else
-	{
-		sprintf(http_headers, "%s\r\n", http_headers);
-	}
-	http_headers = (char*)realloc(http_headers, strlen(http_headers) + 1);
+    if(custom_headers != NULL)
+    {
+        sprintf(http_headers, "%s%s\r\n", http_headers, custom_headers);
+    }
+    else
+    {
+        sprintf(http_headers, "%s\r\n", http_headers);
+    }
+    http_headers = (char*)realloc(http_headers, strlen(http_headers) + 1);
 
-	/* Make request and return response */
-	http_response_t *hresp = http_req(http_headers, purl);
+    /* Make request and return response */
+    http_response_t *hresp = http_req(http_headers, purl);
 
-	/* Handle redirect */
-	return handle_redirect_head(hresp, custom_headers);
+    /* Handle redirect */
+    return handle_redirect_head(hresp, custom_headers);
 }
 
 /*
-	Do HTTP OPTIONs requests
+    Do HTTP OPTIONs requests
 */
 http_response_t *http_options(char *url)
 {
-	/* Parse url */
-	parsed_url_t_2  *purl = parse_url(url);
-	if(purl == NULL)
-	{
-		printf("Unable to parse url");
-		return NULL;
-	}
+    /* Parse url */
+    parsed_url_t_2  *purl = parse_url(url);
+    if(purl == NULL)
+    {
+        printf("Unable to parse url");
+        return NULL;
+    }
 
-	/* Declare variable */
-	char *http_headers = (char*)malloc(1024);
+    /* Declare variable */
+    char *http_headers = (char*)malloc(1024);
 
-	/* Build query/headers */
-	if(purl->path != NULL)
-	{
-		if(purl->query != NULL)
-		{
-			sprintf(http_headers, "OPTIONS /%s?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->path, purl->query, purl->host);
-		}
-		else
-		{
-			sprintf(http_headers, "OPTIONS /%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->path, purl->host);
-		}
-	}
-	else
-	{
-		if(purl->query != NULL)
-		{
-			sprintf(http_headers, "OPTIONS/?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->query, purl->host);
-		}
-		else
-		{
-			sprintf(http_headers, "OPTIONS / HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->host);
-		}
-	}
+    /* Build query/headers */
+    if(purl->path != NULL)
+    {
+        if(purl->query != NULL)
+        {
+            sprintf(http_headers, "OPTIONS /%s?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->path, purl->query, purl->host);
+        }
+        else
+        {
+            sprintf(http_headers, "OPTIONS /%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->path, purl->host);
+        }
+    }
+    else
+    {
+        if(purl->query != NULL)
+        {
+            sprintf(http_headers, "OPTIONS/?%s HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->query, purl->host);
+        }
+        else
+        {
+            sprintf(http_headers, "OPTIONS / HTTP/1.1\r\nHost:%s\r\nConnection:close\r\n", purl->host);
+        }
+    }
 
-	/* Handle authorisation if needed */
-	if(purl->username != NULL)
-	{
-		/* Format username:password pair */
-		char *upwd = (char*)malloc(1024);
-		sprintf(upwd, "%s:%s", purl->username, purl->password);
-		upwd = (char*)realloc(upwd, strlen(upwd) + 1);
+    /* Handle authorisation if needed */
+    if(purl->username != NULL)
+    {
+        /* Format username:password pair */
+        char *upwd = (char*)malloc(1024);
+        sprintf(upwd, "%s:%s", purl->username, purl->password);
+        upwd = (char*)realloc(upwd, strlen(upwd) + 1);
 
-		/* Base64 encode */
-		char *base64 = base64_encode(upwd);
+        /* Base64 encode */
+        char *base64 = base64_encode(upwd);
 
-		/* Form header */
-		char *auth_header = (char*)malloc(1024);
-		sprintf(auth_header, "Authorization: Basic %s\r\n", base64);
-		auth_header = (char*)realloc(auth_header, strlen(auth_header) + 1);
+        /* Form header */
+        char *auth_header = (char*)malloc(1024);
+        sprintf(auth_header, "Authorization: Basic %s\r\n", base64);
+        auth_header = (char*)realloc(auth_header, strlen(auth_header) + 1);
 
-		/* Add to header */
-		http_headers = (char*)realloc(http_headers, strlen(http_headers) + strlen(auth_header) + 2);
-		sprintf(http_headers, "%s%s", http_headers, auth_header);
-	}
+        /* Add to header */
+        http_headers = (char*)realloc(http_headers, strlen(http_headers) + strlen(auth_header) + 2);
+        sprintf(http_headers, "%s%s", http_headers, auth_header);
+    }
 
-	/* Build headers */
-	sprintf(http_headers, "%s\r\n", http_headers);
-	http_headers = (char*)realloc(http_headers, strlen(http_headers) + 1);
+    /* Build headers */
+    sprintf(http_headers, "%s\r\n", http_headers);
+    http_headers = (char*)realloc(http_headers, strlen(http_headers) + 1);
 
-	/* Make request and return response */
+    /* Make request and return response */
     http_response_t *hresp = http_req(http_headers, purl);
 
-	/* Handle redirect */
-	return hresp;
+    /* Handle redirect */
+    return hresp;
 }
 
 /*
-	Free memory of http_response
+    Free memory of http_response
 */
 void http_response_free(http_response_t *hresp)
 {
-	if(hresp != NULL)
-	{
-		if(hresp->request_uri != NULL) parsed_url_free_2(hresp->request_uri);
-		if(hresp->body != NULL) free(hresp->body);
-		if(hresp->status_code != NULL) free(hresp->status_code);
-		//if(hresp->status_text != NULL) free(hresp->status_text);
+    if(hresp != NULL)
+    {
+        if(hresp->request_uri != NULL) parsed_url_free_2(hresp->request_uri);
+        if(hresp->body != NULL) free(hresp->body);
+        if(hresp->status_code != NULL) free(hresp->status_code);
+        //if(hresp->status_text != NULL) free(hresp->status_text);
         /*Comment below line which is needed by http_req() 
           due to the headers is not generated by malloc.*/
-		if(hresp->request_headers != NULL) free(hresp->request_headers); 
-		if(hresp->response_headers != NULL) free(hresp->response_headers);
-		free(hresp);
-	}
+        if(hresp->request_headers != NULL) free(hresp->request_headers); 
+        if(hresp->response_headers != NULL) free(hresp->response_headers);
+        free(hresp);
+    }
 }

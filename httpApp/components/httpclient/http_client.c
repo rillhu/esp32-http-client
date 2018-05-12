@@ -18,6 +18,9 @@
 #include "lwip/sys.h"
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
+#ifdef SSL_ENABLE
+#include "openssl/ssl.h"
+#endif
 
 #include "esp_system.h"
 
@@ -139,7 +142,7 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
 	hresp->request_headers = NULL;
 	hresp->response_headers = NULL;
 	hresp->status_code = NULL;
-	hresp->status_text = NULL;
+//	hresp->status_text = NULL;
 
     DPRINT("http_add 1, heap_size: %d\n",esp_get_free_heap_size());
 
@@ -150,6 +153,17 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     };
     struct addrinfo *res;
     int socket_fd;
+
+#ifdef SSL_ENABLE  // ENABLE HTTPS OVER SSL
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    ctx = SSL_CTX_new(TLSv1_2_client_method());
+    if (!ctx) {
+        printf("Failed to create SSL CTX\n");
+        ctx = NULL;
+        return NULL;
+    }
+#endif
 
     int err = getaddrinfo(purl->host, purl->port, &hints, &res);
     
@@ -167,16 +181,58 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     if(socket_fd < 0) {
         printf("... Failed to allocate socket.\n");
         freeaddrinfo(res);
+#ifdef SSL_ENABLE  // ENABLE HTTPS OVER SSL
+        SSL_CTX_free(ctx);
+        ctx = NULL;
+#endif
         return NULL;
     }
-    printf("... allocated socket\r\n");
+    
+    DPRINT("... allocated socket\r\n");
 
     if(connect(socket_fd, res->ai_addr, res->ai_addrlen) != 0) {
         printf("... socket connect failed\n");
         close(socket_fd);
         freeaddrinfo(res);
+#ifdef SSL_ENABLE  // ENABLE HTTPS OVER SSL
+        SSL_CTX_free(ctx);
+        ctx = NULL;
+#endif
         return NULL;
     }
+    
+#ifdef SSL_ENABLE  // ENABLE HTTPS OVER SSL
+    DPRINT("Creating SSL object...");
+    ssl = SSL_new(ctx);
+    if (!ssl) {
+        printf("Unable to creat new SSL\n");
+        close(socket_fd);
+        SSL_CTX_free(ctx);
+        ctx = NULL;
+        return NULL;
+    }
+
+    SSL_CTX_set_verify(ctx, 0, 0);
+
+    if (!SSL_set_fd(ssl, socket_fd)) {
+        close(socket_fd);
+        SSL_CTX_free(ctx);
+        ctx = NULL;
+        return NULL;
+    }
+
+    DPRINT("Start SSL connect..");
+    int ret_ssl = 0;
+    if (!(ret_ssl = SSL_connect(ssl))) {
+        printf("SSL Connect FAILED: %d\n",ret_ssl);
+        SSL_free(ssl);
+        ssl = NULL;
+        close(socket_fd);
+        SSL_CTX_free(ctx);
+        ctx = NULL;
+        return NULL;
+    }
+#endif
 
     DPRINT("... connected\n");
     freeaddrinfo(res);
@@ -193,11 +249,23 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     int tmpres;
 	while(sent < strlen(http_headers))
 	{
-	    tmpres = write(socket_fd, http_headers+sent, strlen(http_headers)-sent);
+#if defined(SSL_ENABLE)
+    tmpres = SSL_write(ssl, http_headers+sent, strlen(http_headers)-sent);
+#else
+    tmpres = write(socket_fd, http_headers+sent, strlen(http_headers)-sent);
+#endif
 		if(tmpres == -1)
 		{
-			printf("Can't send headers");            
+			printf("Can't send headers");  
+#ifdef SSL_ENABLE
+            SSL_free(ssl);
+            ssl = NULL;
+#endif
             close(socket_fd);
+#ifdef SSL_ENABLE
+            SSL_CTX_free(ctx);
+            ctx = NULL;
+#endif
 			return NULL;
 		}
 		sent += tmpres;
@@ -211,23 +279,35 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
 	char BUF[BUF_SIZE];
 	int recived_len = 0;
     response[0] = '\0';
+#if defined(SSL_ENABLE)
+    while((recived_len = SSL_read(ssl, BUF, BUF_SIZE-1)) > 0)
+#else
 	while((recived_len = read(socket_fd, BUF, BUF_SIZE-1)) > 0)
+#endif
 	{
         BUF[recived_len] = '\0';
 		response = (char*)realloc(response, strlen(response) + strlen(BUF) + 1);
 		sprintf(response, "%s%s", response, BUF);
         
         if(strlen(response)>=RECV_BUF_MAX_SIZE){
-            printf("recv buf is full\n");
+            printf("recv buf %d is full\n", strlen(response));
             break;
         }
 	}
     //DPRINT("\n------------------\n%s\n------------------\n",response);
     
-	if (recived_len < 0)
+    if (recived_len < 0)
     {
 		free(http_headers);
-	    close(socket_fd);
+#ifdef SSL_ENABLE
+        SSL_free(ssl);
+        ssl = NULL;
+#endif
+        close(socket_fd);
+#ifdef SSL_ENABLE
+        SSL_CTX_free(ctx);
+        ctx = NULL;
+#endif
         printf("Unabel to recieve\n");
 		return NULL;
     }
@@ -237,7 +317,16 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     response[strlen(response)] = '\0';  //This can avoid corrupt heap related issues
 
 	/* Close socket */
-	close(socket_fd);
+#ifdef SSL_ENABLE
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    ssl = NULL;
+#endif
+    close(socket_fd);
+#ifdef SSL_ENABLE
+    SSL_CTX_free(ctx);
+    ctx = NULL;
+#endif
     
     DPRINT("close fd\n");
 
@@ -245,12 +334,13 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     /* Parse status code and text */
 	char *status_line = get_until(response, "\r\n");    
 	char *status_line_r = str_replace("HTTP/1.1 ", "", status_line);    
-	char *status_code = str_ndup(status_line_r, 4);    
-	//status_code = str_replace(" ", "", status_code); //HTTP/1.1 response does not contain ',' anymore.   
-	char *status_text = str_replace(status_code, "", status_line_r);    
-    char *status_text_r = str_replace(" ", "", status_text);    
-
-    free(status_text);
+	char *status_code = str_ndup(status_line_r, 4);
+    /*HTTP/1.1 response does not contain ',' anymore.   */
+	//char *status_text = str_replace(status_code, "", status_line_r);
+	/*Some website does not contain status code*/
+	//status_code = str_replace(" ", "", status_code); 
+    //char *status_text_r = str_replace(" ", "", status_text);
+    //free(status_text);
     free(status_line);    
     free(status_line_r);
     
@@ -258,20 +348,21 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     
     hresp->status_code = status_code;
 	hresp->status_code_int = atoi(status_code);
-	hresp->status_text = status_text_r;
-    
+	//hresp->status_text = status_text_r;
 	/* Assign request headers */
 	hresp->request_headers = http_headers;
 	/* Assign request url */
 	hresp->request_uri = purl;
+    
     /* Parse response headers */
     char *headers = get_until(response, "\r\n\r\n");
     hresp->response_headers = headers; //headers will be free in http_response_free();
     /* Parse body */
-    char *body = strstr(response, "\r\n\r\n");    
-    //DPRINT("debug: %s", body);
-    body = str_replace("\r\n\r\n", "", body);    
-    hresp->body = body; //body will be free in http_response_free();
+    char *body = strstr(response, "\r\n\r\n");
+    unsigned int body_len = strlen(body);
+    hresp->body = (char *)malloc(body_len);
+    memcpy(hresp->body, body+4, body_len-4); //4 = strlen("\r\n\r\n")
+    hresp->body[body_len-4] = '\0';
 
     free(response);
 
@@ -293,6 +384,12 @@ http_response_t *http_get(char *url, char *custom_headers)
 		printf("Unable to parse url");
 		return NULL;
 	}
+    
+    DPRINT("url: %s\n", purl->host);
+    if(purl->path != NULL)
+        DPRINT("path: %s\n", purl->path);
+    if(purl->query!=NULL)
+        DPRINT("query: %s\n", purl->query);
 
 	/* Declare variable */
 	char *http_headers = (char*)malloc(1024);
@@ -379,14 +476,14 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
 		return NULL;
 	}
 
+    DPRINT("url: %s\n", purl->host);
+    if(purl->path != NULL)
+        DPRINT("path: %s\n", purl->path);
+    if(purl->query!=NULL)
+        DPRINT("query: %s\n", purl->query);
+
 	/* Declare variable */
 	char *http_headers = (char*)malloc(1024);
-    
-    printf("url: %s\n", purl->host);
-    if(purl->path != NULL)
-        printf("path: %s\n", purl->path);
-    if(purl->query!=NULL)
-        printf("query: %s\n", purl->query);
 
 	/* Build query/headers */
 	if(purl->path != NULL)
@@ -615,7 +712,7 @@ void http_response_free(http_response_t *hresp)
 		if(hresp->request_uri != NULL) parsed_url_free_2(hresp->request_uri);
 		if(hresp->body != NULL) free(hresp->body);
 		if(hresp->status_code != NULL) free(hresp->status_code);
-		if(hresp->status_text != NULL) free(hresp->status_text);
+		//if(hresp->status_text != NULL) free(hresp->status_text);
         /*Comment below line which is needed by http_req() 
           due to the headers is not generated by malloc.*/
 		if(hresp->request_headers != NULL) free(hresp->request_headers); 

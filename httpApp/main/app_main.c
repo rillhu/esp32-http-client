@@ -41,8 +41,9 @@ static void initialise_wifi(void)
     ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = "HNA-Cloud",
-            .password = "hnaresearch",
+            //.ssid = "HNA-Cloud",
+            //.password = "hnaresearch",
+
         },
     };
     ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...", wifi_config.sta.ssid);
@@ -54,10 +55,18 @@ static void initialise_wifi(void)
 }
 
 
+char *urls[4] = 
+    {
+        "http://www.baidu.com",
+        "http://www.example.com",
+        "http://www.wechat.com",
+        "http://www.sina.com"
+    };
+        
 void http_task(void *pvParameters)
 {
     (void)pvParameters;
-    
+    unsigned int i = 0;
     while(1){
 
 #if 0   //raw mode to send http request
@@ -81,7 +90,7 @@ void http_task(void *pvParameters)
         printf("http free, heap_size: %d\n",esp_get_free_heap_size());
 #endif
 
-#if 1
+#if 0   //http get test 
         char * url = "http://www.baidu.com";    //prefer to use such format to transfer the url, not directly write in function call.
         http_response_t *hresp = http_get(url, NULL);
         
@@ -100,7 +109,7 @@ void http_task(void *pvParameters)
         printf("http free, heap_size: %d\n",esp_get_free_heap_size());
 #endif
 
-#if 1
+#if 0   //http post test
         char * url2 = "http://www.example.com";    //prefer to use such format to transfer the url, not directly write in function call.
 
         http_response_t *hresp2 = http_post(url2, NULL,"title=test&sub%5B%5D=1&sub%5B%5D=2&sub%5B%5D=3");
@@ -116,6 +125,28 @@ void http_task(void *pvParameters)
         
         printf("http free2, heap_size: %d\n",esp_get_free_heap_size());
 #endif
+
+#if 1   //https get test
+        char * url = urls[i++&0x3];//"http://www.example.com";    //prefer to use such format to transfer the url, not directly write in function call.
+        http_response_t *hresp = http_get(url, NULL);
+        
+        printf("http get, heap_size: %d\n",esp_get_free_heap_size());
+        if(hresp != NULL){
+            printf("s_code: %s\n", hresp->status_code);
+            printf("s_code_int: %d\n", hresp->status_code_int);
+            //printf("s_text: %8s\n", hresp->status_text);
+            char buf[128];
+            snprintf(buf,127,"%s",hresp->body);
+            printf("body: \n%s\n",buf);
+            http_response_free(hresp);            
+            printf("done1\n");
+        }
+        
+        printf("done2\n");
+        
+        printf("http free, heap_size: %d\n",esp_get_free_heap_size());
+#endif
+
 
 #if 0   //A test case to get weather report from openweathermap
         http_response_t *hresp3 = http_get("http://api.openweathermap.org/data/2.5/forecast/daily?id=1790630&mode=json&units=metric&cnt=1&appid=69e96c570859995c79a7f1dd9a40be3c ", NULL);

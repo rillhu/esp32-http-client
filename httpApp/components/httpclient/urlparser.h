@@ -44,11 +44,8 @@ typedef struct parsed_url_2
     char *password;             /* optional */
 }parsed_url_t_2;
 
-
 parsed_url_t_2 *parse_url(const char *url);
 void parsed_url_free_2(parsed_url_t_2 *purl);
-
-
 
 #endif /*__URLPARSER_H__*/
 

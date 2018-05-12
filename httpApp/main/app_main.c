@@ -1,11 +1,7 @@
-/* LwIP SNTP example
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
+/* 
+HTTP lib test project
 */
+
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
@@ -60,11 +56,11 @@ static void initialise_wifi(void)
 
 void http_task(void *pvParameters)
 {
-
     (void)pvParameters;
+    
     while(1){
 
-#if 0
+#if 0   //raw mode to send http request
         printf("http get, heap_size: %d\n",esp_get_free_heap_size());
 
         //Note shou comment the free(hresp->request_headers); if use this test case.
@@ -104,7 +100,6 @@ void http_task(void *pvParameters)
         printf("http free, heap_size: %d\n",esp_get_free_heap_size());
 #endif
 
-
 #if 1
         char * url2 = "http://www.example.com";    //prefer to use such format to transfer the url, not directly write in function call.
 
@@ -122,20 +117,19 @@ void http_task(void *pvParameters)
         printf("http free2, heap_size: %d\n",esp_get_free_heap_size());
 #endif
 
-#if 0
-        http_response_t *hresp = http_get("http://api.openweathermap.org/data/2.5/forecast/daily?id=1790630&mode=json&units=metric&cnt=1&appid=69e96c570859995c79a7f1dd9a40be3c ", NULL);
-        printf("s_code: %s\n", hresp->status_code);
-        printf("s_code_int: %d\n", hresp->status_code_int);
-        printf("s_text: %s\n", hresp->status_text);    
-        printf("body: \n%s\n", hresp->body);
-
-        http_response_free(hresp);
-
+#if 0   //A test case to get weather report from openweathermap
+        http_response_t *hresp3 = http_get("http://api.openweathermap.org/data/2.5/forecast/daily?id=1790630&mode=json&units=metric&cnt=1&appid=69e96c570859995c79a7f1dd9a40be3c ", NULL);
+        printf("s_code: %s\n", hresp3->status_code);
+        printf("s_code_int: %d\n", hresp3->status_code_int);
+        printf("s_text: %s\n", hresp3->status_text);    
+        printf("body: \n%s\n", hresp3->body);
+        http_response_free(hresp3);
         printf("done\n");
 #endif
 
-
-#if 0
+#if 0   
+        //A method to check the heap size status, it is useful to determine which part of you code 
+        // does not free memory correctly.
         char *str1 = (char *)malloc(1024);
         memset(str1,'A',1024);
         char *str2 = (char *)malloc(1024);
@@ -162,8 +156,8 @@ void app_main()
     initialise_wifi();
 
     /*
-        * Wait for wifi is connected
-        */
+     * Wait for wifi is connected
+    */
     tcpip_adapter_ip_info_t ip_info;
     tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info);
     while(ip_info.ip.addr == 0){

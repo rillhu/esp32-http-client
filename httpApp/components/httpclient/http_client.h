@@ -3,7 +3,6 @@
 
 #include "urlparser.h"
 
-
 #define DEBUG_ENABLE
 #ifdef DEBUG_ENABLE
 #define DPRINT(fmt, args...) fprintf(stderr, "[%s(): L%d] "fmt"\n", __func__, __LINE__, ##args);
@@ -25,8 +24,6 @@ typedef struct http_response
 	char *response_headers;
 }http_response_t;
 
-
-
 /*
 	Prototype functions
 */
@@ -34,8 +31,6 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl);
 http_response_t *http_get(char *url, char *custom_headers);
 http_response_t *http_head(char *url, char *custom_headers);
 http_response_t *http_post(char *url, char *custom_headers, char *post_data);
-
 void http_response_free(http_response_t *hresp);
-
 
 #endif /*__HTTP_CLIENT_H__*/

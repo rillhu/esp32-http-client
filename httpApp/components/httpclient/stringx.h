@@ -35,9 +35,5 @@ char *str_ndup (const char *str, size_t max);
 char* base64_decode(char *b64src);
 char* base64_encode(char *clrstr);
 
-
-
-
-
 #endif /*__STRINGX_H__*/
 

@@ -182,6 +182,12 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     freeaddrinfo(res);
     DPRINT("http_add 2, heap_size: %d\n",esp_get_free_heap_size());
 
+    //Time out timer
+    int nNetTimeout=10000; //10 Sec
+    //int nNetTimeout=5000; // 5 Sec
+    setsockopt(socket_fd,SOL_SOCKET,SO_SNDTIMEO,(char *)&nNetTimeout,sizeof(int));
+    setsockopt(socket_fd,SOL_SOCKET,SO_RCVTIMEO,(char *)&nNetTimeout,sizeof(int));
+
 	/* Send headers to server */
 	int sent = 0;
     int tmpres;

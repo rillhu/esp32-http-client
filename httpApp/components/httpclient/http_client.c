@@ -32,27 +32,27 @@ const unsigned int RECV_BUF_MAX_SIZE = 1024; //max total read buf size.
 */
 http_response_t *handle_redirect_get(struct http_response* hresp, char* custom_headers)
 {
-	if(hresp->status_code_int > 300 && hresp->status_code_int < 399)
-	{        
+    if(hresp->status_code_int > 300 && hresp->status_code_int < 399)
+    {        
         DPRINT("get\n");
-		char *token = strtok(hresp->response_headers, "\r\n");
-		while(token != NULL)
-		{
-			if(str_contains(token, "Location:"))
-			{              
+        char *token = strtok(hresp->response_headers, "\r\n");
+        while(token != NULL)
+        {
+            if(str_contains(token, "Location:"))
+            {              
                 http_response_free(hresp);  //free the 1st http response pointer if http is redirected.
-				/* Extract url */
-				char *location = str_replace("Location: ", "", token);
-				return http_get(location, custom_headers);
-			}
-			token = strtok(NULL, "\r\n");
-		}
-	}
-	else
-	{
-		/* We're not dealing with a redirect, just return the same structure */
-		return hresp;
-	}
+                /* Extract url */
+                char *location = str_replace("Location: ", "", token);
+                return http_get(location, custom_headers);
+            }
+            token = strtok(NULL, "\r\n");
+        }
+    }
+    else
+    {
+        /* We're not dealing with a redirect, just return the same structure */
+        return hresp;
+    }
     
     return hresp;
 }
@@ -90,31 +90,30 @@ http_response_t *handle_redirect_head(struct http_response* hresp, char* custom_
 */
 http_response_t *handle_redirect_post(struct http_response* hresp, char* custom_headers, char *post_data)
 {
-	if(hresp->status_code_int > 300 && hresp->status_code_int < 399)
-	{                
+    if(hresp->status_code_int > 300 && hresp->status_code_int < 399)
+    {                
         DPRINT("post");
-		char *token = strtok(hresp->response_headers, "\r\n");
-		while(token != NULL)
-		{            
-			if(str_contains(token, "Location:"))
-			{        
-                
+        char *token = strtok(hresp->response_headers, "\r\n");
+        while(token != NULL)
+        {            
+            if(str_contains(token, "Location:"))
+            {
                 DPRINT("post");
                 //http_response_free(hresp);  //free the 1st http response pointer if http is redirected.
-				/* Extract url */
-				char *location = str_replace("Location: ", "", token);
-				return http_post(location, custom_headers, post_data);
-			}
-			token = strtok(NULL, "\r\n");
-		}
-	}
-	else
-	{        
+                /* Extract url */
+                char *location = str_replace("Location: ", "", token);
+                return http_post(location, custom_headers, post_data);
+            }
+        	token = strtok(NULL, "\r\n");
+        }
+    }
+    else
+    {        
         DPRINT("post");
-		/* We're not dealing with a redirect, just return the same structure */
-		return hresp;
-	}
-    
+        /* We're not dealing with a redirect, just return the same structure */
+        return hresp;
+    }
+
     return hresp;
 }
 
@@ -123,26 +122,26 @@ http_response_t *handle_redirect_post(struct http_response* hresp, char* custom_
 */
 http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
 {
-	/* Parse url */
-	if(purl == NULL)
-	{
-		printf("Unable to parse url\n");
-		return NULL;
-	}
+    /* Parse url */
+    if(purl == NULL)
+    {
+        printf("Unable to parse url\n");
+        return NULL;
+    }
 
-	/* Allocate memeory for htmlcontent */
-	struct http_response *hresp = (http_response_t *)malloc(sizeof(struct http_response));
-    
-	if(hresp == NULL)
-	{
-		printf("Unable to allocate memory for htmlcontent.\n");
-		return NULL;
-	}
-	hresp->body = NULL;
-	hresp->request_headers = NULL;
-	hresp->response_headers = NULL;
-	hresp->status_code = NULL;
-//	hresp->status_text = NULL;
+    /* Allocate memeory for htmlcontent */
+    struct http_response *hresp = (http_response_t *)malloc(sizeof(struct http_response));
+
+    if(hresp == NULL)
+    {
+        printf("Unable to allocate memory for htmlcontent.\n");
+        return NULL;
+    }
+    hresp->body = NULL;
+    hresp->request_headers = NULL;
+    hresp->response_headers = NULL;
+    hresp->status_code = NULL;
+    //	hresp->status_text = NULL;
 
     DPRINT("http_add 1, heap_size: %d\n",esp_get_free_heap_size());
 
@@ -244,19 +243,19 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     setsockopt(socket_fd,SOL_SOCKET,SO_SNDTIMEO,(char *)&nNetTimeout,sizeof(int));
     setsockopt(socket_fd,SOL_SOCKET,SO_RCVTIMEO,(char *)&nNetTimeout,sizeof(int));
 
-	/* Send headers to server */
-	int sent = 0;
+    /* Send headers to server */
+    int sent = 0;
     int tmpres;
-	while(sent < strlen(http_headers))
-	{
+    while(sent < strlen(http_headers))
+    {
 #if defined(SSL_ENABLE)
     tmpres = SSL_write(ssl, http_headers+sent, strlen(http_headers)-sent);
 #else
     tmpres = write(socket_fd, http_headers+sent, strlen(http_headers)-sent);
 #endif
-		if(tmpres == -1)
-		{
-			printf("Can't send headers");  
+        if(tmpres == -1)
+        {
+            printf("Can't send headers");  
 #ifdef SSL_ENABLE
             SSL_free(ssl);
             ssl = NULL;
@@ -268,37 +267,37 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
 #endif
 			return NULL;
 		}
-		sent += tmpres;
+        sent += tmpres;
     }
 
     DPRINT("... socket send success\n");
     DPRINT("http_req 0, heap_size: %d\n",esp_get_free_heap_size());
 
     /* Recieve HTTP response into response*/
-	char *response = (char*)malloc(1);
-	char BUF[BUF_SIZE];
-	int recived_len = 0;
+    char *response = (char*)malloc(1);
+    char BUF[BUF_SIZE];
+    int recived_len = 0;
     response[0] = '\0';
 #if defined(SSL_ENABLE)
     while((recived_len = SSL_read(ssl, BUF, BUF_SIZE-1)) > 0)
 #else
-	while((recived_len = read(socket_fd, BUF, BUF_SIZE-1)) > 0)
+    while((recived_len = read(socket_fd, BUF, BUF_SIZE-1)) > 0)
 #endif
-	{
+    {
         BUF[recived_len] = '\0';
-		response = (char*)realloc(response, strlen(response) + strlen(BUF) + 1);
-		sprintf(response, "%s%s", response, BUF);
-        
+        response = (char*)realloc(response, strlen(response) + strlen(BUF) + 1);
+        sprintf(response, "%s%s", response, BUF);
+
         if(strlen(response)>=RECV_BUF_MAX_SIZE){
             printf("recv buf %d is full\n", strlen(response));
             break;
         }
-	}
+    }
     //DPRINT("\n------------------\n%s\n------------------\n",response);
     
     if (recived_len < 0)
     {
-		free(http_headers);
+        free(http_headers);
 #ifdef SSL_ENABLE
         SSL_free(ssl);
         ssl = NULL;
@@ -309,11 +308,11 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
         ctx = NULL;
 #endif
         printf("Unabel to recieve\n");
-		return NULL;
+        return NULL;
     }
 
-	/* Reallocate response */
-	response = (char*)realloc(response, strlen(response) + 1);
+    /* Reallocate response */
+    response = (char*)realloc(response, strlen(response) + 1);
     response[strlen(response)] = '\0';  //This can avoid corrupt heap related issues
 
 	/* Close socket */
@@ -332,13 +331,13 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
 
     DPRINT("http_req 1, heap_size: %d\n",esp_get_free_heap_size());
     /* Parse status code and text */
-	char *status_line = get_until(response, "\r\n");    
-	char *status_line_r = str_replace("HTTP/1.1 ", "", status_line);    
-	char *status_code = str_ndup(status_line_r, 4);
+    char *status_line = get_until(response, "\r\n");    
+    char *status_line_r = str_replace("HTTP/1.1 ", "", status_line);    
+    char *status_code = str_ndup(status_line_r, 4);
     /*HTTP/1.1 response does not contain ',' anymore.   */
-	//char *status_text = str_replace(status_code, "", status_line_r);
-	/*Some website does not contain status code*/
-	//status_code = str_replace(" ", "", status_code); 
+    //char *status_text = str_replace(status_code, "", status_line_r);
+    /*Some website does not contain status code*/
+    //status_code = str_replace(" ", "", status_code); 
     //char *status_text_r = str_replace(" ", "", status_text);
     //free(status_text);
     free(status_line);    
@@ -347,13 +346,13 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     DPRINT("http_req 2, heap_size: %d\n",esp_get_free_heap_size());
     
     hresp->status_code = status_code;
-	hresp->status_code_int = atoi(status_code);
-	//hresp->status_text = status_text_r;
-	/* Assign request headers */
-	hresp->request_headers = http_headers;
-	/* Assign request url */
-	hresp->request_uri = purl;
-    
+    hresp->status_code_int = atoi(status_code);
+    //hresp->status_text = status_text_r;
+    /* Assign request headers */
+    hresp->request_headers = http_headers;
+    /* Assign request url */
+    hresp->request_uri = purl;
+
     /* Parse response headers */
     char *headers = get_until(response, "\r\n\r\n");
     hresp->response_headers = headers; //headers will be free in http_response_free();
@@ -368,8 +367,8 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
 
     DPRINT("http_req 3, heap_size: %d\n",esp_get_free_heap_size());
 
-	/* Return response */
-	return hresp;
+    /* Return response */
+    return hresp;
 }
 
 /*

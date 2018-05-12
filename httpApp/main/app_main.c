@@ -98,7 +98,6 @@ void http_task(void *pvParameters)
         if(hresp != NULL){
             printf("s_code: %s\n", hresp->status_code);
             printf("s_code_int: %d\n", hresp->status_code_int);
-            printf("s_text: %s\n", hresp->status_text);    
             printf("body: \n%s\n", hresp->body);
             http_response_free(hresp);            
             printf("done1\n");
@@ -109,15 +108,14 @@ void http_task(void *pvParameters)
         printf("http free, heap_size: %d\n",esp_get_free_heap_size());
 #endif
 
-#if 0   //http post test
+#if 1   //http post test
         char * url2 = "http://www.example.com";    //prefer to use such format to transfer the url, not directly write in function call.
 
         http_response_t *hresp2 = http_post(url2, NULL,"title=test&sub%5B%5D=1&sub%5B%5D=2&sub%5B%5D=3");
         
-        if(hresp != NULL){
+        if(hresp2 != NULL){
             printf("s_code: %s\n", hresp2->status_code);
             printf("s_code_int: %d\n", hresp2->status_code_int);
-            printf("s_text: %s\n", hresp2->status_text);    
             printf("body: \n%s\n", hresp2->body);
 
             http_response_free(hresp2);
@@ -152,7 +150,6 @@ void http_task(void *pvParameters)
         http_response_t *hresp3 = http_get("http://api.openweathermap.org/data/2.5/forecast/daily?id=1790630&mode=json&units=metric&cnt=1&appid=69e96c570859995c79a7f1dd9a40be3c ", NULL);
         printf("s_code: %s\n", hresp3->status_code);
         printf("s_code_int: %d\n", hresp3->status_code_int);
-        printf("s_text: %s\n", hresp3->status_text);    
         printf("body: \n%s\n", hresp3->body);
         http_response_free(hresp3);
         printf("done\n");

@@ -8,9 +8,9 @@
 
 
 #ifdef DEBUG_TRACE_ENABLE
-#define DPRINT(fmt, args...) fprintf(stderr, "[%s(): L%d] "fmt"\n", __func__, __LINE__, ##args);
+    #define DPRINT(fmt, args...) fprintf(stderr, "[%s(): L%d] "fmt"\n", __func__, __LINE__, ##args);
 #else
-#define DPRINT(fmt, ...)
+    #define DPRINT(fmt, ...)
 #endif
 
 /*
@@ -18,16 +18,16 @@
 */
 typedef struct http_response
 {
-	parsed_url_t_2  *request_uri;
-	char *body;
-	char *status_code;
-	int status_code_int;
+    parsed_url_t_2  *request_uri;
+    char *body;
+    char *status_code;
+    int status_code_int;
     /*Donot use this member anymore due to 
       some web site does not return status text
     */
-//	char *status_text;
-	char *request_headers;
-	char *response_headers;
+    //char *status_text;
+    char *request_headers;
+    char *response_headers;
 }http_response_t;
 
 /*

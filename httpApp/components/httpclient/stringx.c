@@ -9,8 +9,8 @@
 */
 int str_index_of(const char *a, char *b)
 {
-	char *offset = (char*)strstr(a, b);
-	return offset - a;
+    char *offset = (char*)strstr(a, b);
+    return offset - a;
 }
 
 /*
@@ -18,11 +18,11 @@ int str_index_of(const char *a, char *b)
 */
 int str_contains(const char *haystack, const char *needle)
 {
-	char *pos = (char*)strstr(haystack, needle);
-	if(pos)
-		return 1;
-	else
-		return 0;
+    char *pos = (char*)strstr(haystack, needle);
+    if(pos)
+        return 1;
+    else
+        return 0;
 }
 
 /*
@@ -30,17 +30,17 @@ int str_contains(const char *haystack, const char *needle)
 */
 char* trim_end(char *string, char to_trim)
 {
-	char last_char = string[strlen(string) -1];
-	if(last_char == to_trim)
-	{
-		char *new_string = string;
-		new_string[strlen(string) - 1] = 0;
-		return new_string;
-	}
-	else
-	{
-		return string;
-	}
+    char last_char = string[strlen(string) -1];
+    if(last_char == to_trim)
+    {
+        char *new_string = string;
+        new_string[strlen(string) - 1] = 0;
+        return new_string;
+    }
+    else
+    {
+        return string;
+    }
 }
 
 /*
@@ -48,10 +48,10 @@ char* trim_end(char *string, char to_trim)
 */
 char* str_cat(char *a, char *b)
 {
-	char *target = (char*)malloc(strlen(a) + strlen(b) + 1);
-	strcpy(target, a);
-	strcat(target, b);
-	return target;
+    char *target = (char*)malloc(strlen(a) + strlen(b) + 1);
+    strcpy(target, a);
+    strcat(target, b);
+    return target;
 }
 
 /* 
@@ -59,8 +59,8 @@ char* str_cat(char *a, char *b)
 */
 char to_hex(char code) 
 {
-	static char hex[] = "0123456789abcdef";
-	return hex[code & 15];
+    static char hex[] = "0123456789abcdef";
+    return hex[code & 15];
 }
 
 /*
@@ -68,17 +68,17 @@ char to_hex(char code)
 */
 char *urlencode(char *str) 
 {
-	char *pstr = str, *buf = (char*)malloc(strlen(str) * 3 + 1), *pbuf = buf;
-  	while (*pstr) 
-	{
-    	if (isalnum((int)*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') 
-      		*pbuf++ = *pstr;
-    	else if (*pstr == ' ') 
-      		*pbuf++ = '+';
-    	else 
-      		*pbuf++ = '%', *pbuf++ = to_hex(*pstr >> 4), *pbuf++ = to_hex(*pstr & 15);
-    	pstr++;
-  	}
+    char *pstr = str, *buf = (char*)malloc(strlen(str) * 3 + 1), *pbuf = buf;
+    while (*pstr) 
+    {
+        if (isalnum((int)*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') 
+            *pbuf++ = *pstr;
+        else if (*pstr == ' ') 
+            *pbuf++ = '+';
+        else 
+            *pbuf++ = '%', *pbuf++ = to_hex(*pstr >> 4), *pbuf++ = to_hex(*pstr & 15);
+        pstr++;
+    }
   	*pbuf = '\0';
   	return buf;
 }
@@ -103,10 +103,10 @@ char *str_ndup (const char *str, size_t max)
 */
 char *str_dup(const char *src)
 {
-   char *tmp = (char*)malloc(strlen(src) + 1);
-   if(tmp)
-       strcpy(tmp, src);
-   return tmp;
+    char *tmp = (char*)malloc(strlen(src) + 1);
+    if(tmp)
+        strcpy(tmp, src);
+    return tmp;
 }
 
 /*
@@ -140,8 +140,8 @@ char *str_replace(char *search , char *replace , char *subject)
 */
 char* get_until(char *haystack, char *until)
 {
-	int offset = str_index_of(haystack, until);
-	return str_ndup(haystack, offset);
+    int offset = str_index_of(haystack, until);
+    return str_ndup(haystack, offset);
 }
 
 

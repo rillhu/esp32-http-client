@@ -85,7 +85,7 @@ void http_task(void *pvParameters)
         printf("http free, heap_size: %d\n",esp_get_free_heap_size());
 #endif
 
-#if 0
+#if 1
         char * url = "http://www.baidu.com";    //prefer to use such format to transfer the url, not directly write in function call.
         http_response_t *hresp = http_get(url, NULL);
         
@@ -106,20 +106,20 @@ void http_task(void *pvParameters)
 
 
 #if 1
-        char * url = "http://www.example.com";    //prefer to use such format to transfer the url, not directly write in function call.
+        char * url2 = "http://www.example.com";    //prefer to use such format to transfer the url, not directly write in function call.
 
-        http_response_t *hresp = http_post(url, NULL,"title=test&sub%5B%5D=1&sub%5B%5D=2&sub%5B%5D=3");
+        http_response_t *hresp2 = http_post(url2, NULL,"title=test&sub%5B%5D=1&sub%5B%5D=2&sub%5B%5D=3");
         
         if(hresp != NULL){
-            printf("s_code: %s\n", hresp->status_code);
-            printf("s_code_int: %d\n", hresp->status_code_int);
-            printf("s_text: %s\n", hresp->status_text);    
-            printf("body: \n%s\n", hresp->body);
+            printf("s_code: %s\n", hresp2->status_code);
+            printf("s_code_int: %d\n", hresp2->status_code_int);
+            printf("s_text: %s\n", hresp2->status_text);    
+            printf("body: \n%s\n", hresp2->body);
 
-            http_response_free(hresp);
+            http_response_free(hresp2);
         }
         
-        printf("http free, heap_size: %d\n",esp_get_free_heap_size());
+        printf("http free2, heap_size: %d\n",esp_get_free_heap_size());
 #endif
 
 #if 0

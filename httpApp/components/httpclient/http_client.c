@@ -238,10 +238,9 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     DPRINT("http_add 2, heap_size: %d\n",esp_get_free_heap_size());
 
     //Time out timer
-    int nNetTimeout=10000; //10 Sec
-    //int nNetTimeout=5000; // 5 Sec
-    setsockopt(socket_fd,SOL_SOCKET,SO_SNDTIMEO,(char *)&nNetTimeout,sizeof(int));
-    setsockopt(socket_fd,SOL_SOCKET,SO_RCVTIMEO,(char *)&nNetTimeout,sizeof(int));
+    struct timeval timeout={3,0}; //3s
+    setsockopt(socket_fd,SOL_SOCKET,SO_SNDTIMEO,&timeout,sizeof(timeout));
+    setsockopt(socket_fd,SOL_SOCKET,SO_RCVTIMEO,&timeout,sizeof(timeout));
 
     /* Send headers to server */
     int sent = 0;

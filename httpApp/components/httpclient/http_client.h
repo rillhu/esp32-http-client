@@ -3,7 +3,7 @@
 
 #include "urlparser.h"
 
-#define DEBUG_TRACE_ENABLE
+//#define DEBUG_TRACE_ENABLE
 //#define SSL_ENABLE
 
 
@@ -29,6 +29,9 @@ typedef struct http_response
     char *request_headers;
     char *response_headers;
 }http_response_t;
+
+
+int http_client_sock;
 
 /*
 	Prototype functions

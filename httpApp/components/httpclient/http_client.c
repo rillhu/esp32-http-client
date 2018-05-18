@@ -27,6 +27,8 @@
 const unsigned int BUF_SIZE = 1024; //max single read buf size
 const unsigned int RECV_BUF_MAX_SIZE = 1024; //max total read buf size.
 
+int http_client_sock = 0;
+
 /*
     Handles redirect if needed for get requests
 */
@@ -118,6 +120,15 @@ http_response_t *handle_redirect_post(struct http_response* hresp, char* custom_
 }
 
 /*
+   indicate the socket fd
+*/
+
+void http_indicate_socket(int fd)
+{
+    http_client_sock = fd;
+}
+
+/*
     Makes a HTTP request and returns the response
 */
 http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
@@ -135,6 +146,8 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     if(hresp == NULL)
     {
         printf("Unable to allocate memory for htmlcontent.\n");
+        free(hresp);
+        free(http_headers);
         return NULL;
     }
     hresp->body = NULL;
@@ -142,6 +155,19 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     hresp->response_headers = NULL;
     hresp->status_code = NULL;
     //  hresp->status_text = NULL;
+
+    if (purl->host != NULL)
+    {
+        printf("url: %s\n", purl->host);
+    }
+    if(purl->path != NULL)
+    {
+        DPRINT("path: %s\n", purl->path);
+    }
+    if(purl->query!=NULL)
+    {
+        DPRINT("query: %s\n", purl->query);
+    }
 
     DPRINT("http_add 1, heap_size: %d\n",esp_get_free_heap_size());
 
@@ -160,6 +186,9 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     if (!ctx) {
         printf("Failed to create SSL CTX\n");
         ctx = NULL;
+    
+        free(hresp);
+        free(http_headers);
         return NULL;
     }
 #endif
@@ -167,7 +196,9 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     int err = getaddrinfo(purl->host, purl->port, &hints, &res);
     
     if(err != 0 || res == NULL) {
-        printf("DNS lookup failed err=%d res=%p\n", err, res);
+        printf("DNS lookup failed err=%d res=%p\n", err, res);        
+        free(hresp);
+        free(http_headers);
         return NULL;
     }
     
@@ -184,8 +215,12 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
         SSL_CTX_free(ctx);
         ctx = NULL;
 #endif
+        free(hresp);
+        free(http_headers);
         return NULL;
     }
+
+    http_indicate_socket(socket_fd);
     
     DPRINT("... allocated socket\r\n");
 
@@ -197,6 +232,8 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
         SSL_CTX_free(ctx);
         ctx = NULL;
 #endif
+        free(hresp);
+        free(http_headers);
         return NULL;
     }
     
@@ -208,6 +245,8 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
         close(socket_fd);
         SSL_CTX_free(ctx);
         ctx = NULL;
+        
+        free(hresp);
         return NULL;
     }
 
@@ -217,6 +256,9 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
         close(socket_fd);
         SSL_CTX_free(ctx);
         ctx = NULL;
+        
+        free(hresp);
+        free(http_headers);
         return NULL;
     }
 
@@ -229,6 +271,9 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
         close(socket_fd);
         SSL_CTX_free(ctx);
         ctx = NULL;
+        
+        free(hresp);
+        free(http_headers);
         return NULL;
     }
 #endif
@@ -264,6 +309,8 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
             SSL_CTX_free(ctx);
             ctx = NULL;
 #endif
+            free(hresp);
+            free(http_headers);
             return NULL;
         }
         sent += tmpres;
@@ -288,14 +335,15 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
         sprintf(response, "%s%s", response, BUF);
 
         if(strlen(response)>=RECV_BUF_MAX_SIZE){
-            printf("recv buf %d is full\n", strlen(response));
+            DPRINT("recv buf %d is full\n", strlen(response));
             break;
         }
     }
     //DPRINT("\n------------------\n%s\n------------------\n",response);
     
     if (recived_len < 0)
-    {
+    {        
+        free(hresp);
         free(http_headers);
 #ifdef SSL_ENABLE
         SSL_free(ssl);
@@ -321,6 +369,7 @@ http_response_t *http_req(char *http_headers, parsed_url_t_2  *purl)
     ssl = NULL;
 #endif
     close(socket_fd);
+    http_indicate_socket(-1);
 #ifdef SSL_ENABLE
     SSL_CTX_free(ctx);
     ctx = NULL;
@@ -382,12 +431,6 @@ http_response_t *http_get(char *url, char *custom_headers)
         printf("Unable to parse url");
         return NULL;
     }
-
-    DPRINT("url: %s\n", purl->host);
-        if(purl->path != NULL)
-    DPRINT("path: %s\n", purl->path);
-        if(purl->query!=NULL)
-    DPRINT("query: %s\n", purl->query);
 
     /* Declare variable */
     char *http_headers = (char*)malloc(1024);
@@ -473,12 +516,6 @@ http_response_t *http_post(char *url, char *custom_headers, char *post_data)
         printf("Unable to parse url");
         return NULL;
     }
-
-    DPRINT("url: %s\n", purl->host);
-    if(purl->path != NULL)
-        DPRINT("path: %s\n", purl->path);
-    if(purl->query!=NULL)
-        DPRINT("query: %s\n", purl->query);
 
     /* Declare variable */
     char *http_headers = (char*)malloc(1024);

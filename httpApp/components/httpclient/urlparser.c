@@ -39,7 +39,7 @@ char* hostname_to_ip_2(char *hostname)
     struct hostent *h;
     if ((h=gethostbyname(hostname)) == NULL) 
     {  
-        printf("gethostbyname");
+        printf("gethostbyname NULL\n");
         return NULL;
     }
     return inet_ntoa(*((struct in_addr *)h->h_addr));
